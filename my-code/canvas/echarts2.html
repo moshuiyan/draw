@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clock</title>
+    <style>
+        .clock {
+            background: url(./starcat.jpg) center 220px no-repeat;
+            background-size: 300px;
+            clip-path: circle(100px at 50% 50%);
+        }
+    </style>
+</head>
+<body>
+    <canvas class="clock" width="700" height="700"></canvas>
+</body>
+<script>
+    const bg = new Image();
+    bg.src = './starcat.jpg';
+    const p1 =  new Promise((res,rej)=> {
+        bg.onload = function () {
+            const ratio = bg.width / bg.height ;
+            res(ratio)
+    }
+    });
+
+    p1.then(ratio => {
+        draw(ratio)
+    })
+    const ctx = document.getElementsByTagName('canvas')[0].getContext('2d');
+    const π =2 * Math.PI;
+
+    function drawbg() {
+
+    }
+
+function drawClock(ratio){
+
+    ctx.lineWidth = 15 ;
+    ctx.strokeStyle = 'red';
+    ctx.save()
+    ctx.translate(350, 350);
+    ctx.rotate(- Math.PI / 2)
+    ctx.beginPath();
+    ctx.arc(0, 0,100, 0, 2* Math.PI, false);
+    ctx.stroke();
+    //  不写beginpath 居然是把前面的也画了一遍；并且之前的还在
+    ctx.beginPath();
+    ctx.save();
+    ctx.setLineDash([3,3]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000'
+    ctx.moveTo(80,0);
+    ctx.arc(0, 0 ,80,0, Math.PI * 2, false );
+
+    //  只要用上面的路径裁剪就好了
+   /*    
+    ctx.clip();
+    ctx.save();
+    //上面的坐标旋转了 90度，所以这里 x -> -y  y->x ,还是要转回去
+    // 用了动画这个背景图就没出来 似乎一直卡在哪里 ，调试都打不开了 所以先画静态背景
+  ctx.rotate(Math.PI/2);
+    ctx.drawImage(bg,-140 ,-180/ratio, 300,300/ratio)
+    ctx.restore();
+    */
+    ctx.stroke();
+    ctx.restore()
+    
+    ctx.save()
+    ctx.beginPath();
+    ctx.fillStyle='pink';
+    ctx.fillRect(83,-2, 8,4);
+    const angle = Math.PI / 6 ;
+    for( let i = 1 ;i< 12; i ++) {
+        ctx.rotate(angle);
+        ctx.fillRect(83,-1, 8,4);
+
+    }
+    ctx.restore();
+
+        ctx.save()
+    ctx.beginPath();
+    ctx.fillStyle='#000';
+
+    // ctx.fillRect(83,-1, 8,2);
+    const minute = Math.PI / 30 ;
+    for( let i = 1 ;i< 60; i ++) {
+        ctx.rotate(minute);
+        if ( i % 5){
+
+            ctx.fillRect(85,-.5, 5,1);
+        }
+
+    }
+    ctx.restore();
+// 直接用描边画矩形 自然就是居中平分的；
+const {rh, rs,rm } =  getTimeAngle();
+console.log(rh % (Math.PI * 2), rs %( Math.PI * 2),rm % (Math.PI* 2))
+//  时针   
+ctx.save()
+    ctx.beginPath();
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#abcdef';
+
+    ctx.rotate(rh)
+    ctx.moveTo(-20,0);
+    ctx.lineTo(70,0)
+    ctx.stroke()
+
+    ctx.restore()
+    // 分针
+    ctx.save()
+    ctx.beginPath();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#fbcdef';
+
+    ctx.rotate(rm)
+    ctx.moveTo(-20,0);
+    ctx.lineTo(70,0)
+    ctx.stroke()
+
+    ctx.restore()
+// 秒针
+    ctx.save()
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#0bcdef';
+
+    ctx.rotate(rs)
+    ctx.moveTo(-20,0);
+    ctx.lineTo(70,0)
+    ctx.stroke()
+
+    ctx.restore()
+// 铆钉
+    ctx.save()
+    ctx.beginPath()
+    ctx.fillStyle = '#123562'
+    ctx.arc(0,0,7,0, Math.PI * 2, true)
+    ctx.fill();
+
+    ctx.restore();
+
+
+    ctx.restore();
+}
+
+function getTimeAngle() {
+    const timer = new Date();
+    let h = timer.getHours();
+    let m = timer.getMinutes();
+    let s = timer.getSeconds();
+
+    const rh =  π * h/12 + m * π /60/12 + s/3600 *π /12;
+    const rm =  m * π/60  + s*π / 60 / 60;
+    const rs =  s/60 *π  ;
+    return {rh, rs,rm}
+}
+function draw(ratio){
+    ctx.clearRect(0,0,700,700)
+    drawClock(ratio)
+    requestAnimationFrame(draw)
+}
+</script>
+</html>

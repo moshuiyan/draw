@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>d3</title>
+<style>
+    .d3 {
+        width: 500px;
+        height: 500px;
+        margin: auto;
+    }
+    .sky {
+        color: rgba(21, 99, 82, 0.7);
+    }
+    .tu {
+        color: rgb(131, 97, 97);
+    }
+</style>
+</head>
+
+
+<body>
+    <div class="d3"></div>
+    <div>
+        <h1 id="title">沁园春·长沙</h1>
+        <article id="cont">
+            <p>独立寒秋，湘江北去，橘子洲头。</p>
+            <p>看万山红遍，层林尽染；漫江碧透，百舸争流。</p>
+            <p>鹰击长空，鱼翔浅底，万类霜天竞自由。</p>
+            <p>怅寥廓，问苍茫大地，谁主沉浮？</p>
+            <p>携来百侣曾游。忆往昔峥嵘岁月稠。</p>
+            <p>恰同学少年，风华正茂；书生意气，挥斥方遒。</p>
+            <p>指点江山，激扬文字，粪土当年万户侯。</p>
+            <p>曾记否，到中流击水，浪遏飞舟？</p>
+        </article>
+    </div>
+    <script type="module">
+        import './node_modules/d3/dist/d3.min.js' ;
+        const main = d3.select('.d3');
+        console.log(main);
+        const svg = main.append('svg')
+        .attr('width', '100%')
+        .attr('width', '100%');
+        const circle =  svg.append('circle')
+        .attr('cx', '50%')
+        .attr('cy', '50%')
+        .attr('r', '50');
+        circle.on('mouseover', ()=> {
+            circle.attr('fill', '#ed2314');
+        })
+        circle.on('mouseout', ()=> {
+            circle.attr('fill', '#111111')
+        });
+
+//  可以包装原生dom元素
+        const title = d3.select('#title')
+        .attr('class', 'sky');
+        const wraper = d3.select('#cont')
+        wraper.on('click', (e)=> {
+            d3.select(e.target).attr('class', 'tu')
+        })
+    // const ps = d3.selectAll('p').attr('title', '我是一个p标签') 
+    // 过滤
+    const ps1 = d3.selectAll('p').filter(':nth-child(2n)')
+        ps1.attr('title', '偶数')
+        d3.selectAll('p').filter((el, index) => (index + 1)%2).attr('title', '奇数');
+
+        
+    </script>
+</body>
+</html>

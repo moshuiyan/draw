@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>一闪一闪亮晶晶</title>
+		<link rel="icon" type="image/x-icon" href="https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg">
+	</head>
+	<style type="text/css">
+		/* background: url(https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg) no-repeat center 
+			rgba(17, 20, 71, 0.637) 	 */
+		#c2 {
+				background: url(./xiaoxuancai.svg) top center no-repeat
+				rgba(17, 20, 71, 0.637) ;
+		}
+		.audio {
+			outline: salmon;
+		}
+	</style>
+	<body>
+		<canvas id="c2"></canvas>
+		<audio  class="audio" onended="loopPlay(event)" onload="this.play()" title="淋雨一直走" controls  autoplay >
+	 <!-- preload onloadeddata="this.play()"  -->
+			<source  id="sing" src="./media/锦鲤抄=王心汝.mp3" type="audio/mpeg" />
+		</audio>
+		<script>
+				
+				
+		const 时间煮雨 = './media/时间煮雨-王心汝.mp3'
+		const 爱的魔法 = './media/爱的魔法-王心汝.mp3'
+		const 欧若拉 = './media/欧若拉.mp3'
+		const 百变小魔女 = './media/百变小魔女-王心汝.mp3'
+		const 锦鲤抄 = './media/锦鲤抄=王心汝.mp3'
+		const sings = [时间煮雨, 爱的魔法, 欧若拉, 百变小魔女,锦鲤抄]
+		// 之前把这个函数定义放在下一个script标签结果报了 函数未定义。原生事件绑定有这个讲究？
+		let index = 0
+		function loopPlay(e){
+				let auido = e.target
+					
+					auido.src = sings[index];
+					auido.autoplay = true
+					// auido.setAttribute('loop', false)
+					auido.loop = false
+					// auido.play();// 一定要有交互才能执行，没有交互直接报错了,改到加载之后再调用
+					// el.querySelector('#sing').src = sings[index]
+					index++
+					index = index % sings.length;
+					
+				auido.addEventListener('ended', loopPlay)
+
+				}
+				// window.addEventListener('click', loopPlay,{once:true})
+		</script>
+	</body>
+	<script type="x-shader/x-vertex" id = "vertex">
+		attribute vec4 a_Position ;
+		attribute float a_PointSize;
+		void main(){
+			gl_Position = a_Position;
+			gl_PointSize = a_PointSize;
+		}
+	</script>
+	<script type="x-shader/x-fragment" id="fragment">
+		// 定义精度 
+		precision mediump float;
+		uniform vec4 u_fragColor;
+		void main (){
+			float dist  = distance(gl_PointCoord, vec2(0.5, 0.5));
+			if(dist <= 0.5 ){
+			gl_FragColor = u_fragColor;
+				
+			}else {
+				discard;
+			}
+			
+		}
+	</script>
+	<script type="module">
+		import {initShaders} from './util/initShader.js'
+		import Compose from './util/compose.js';
+		import Track from './util/Track.js';
+
+	
+		const canvas = document.querySelector("#c2");
+		canvas.height = window.innerHeight -80 ;
+		canvas.width = window.innerWidth - 10 ;
+		const gl = canvas.getContext("webgl");
+		const vsSource = document.querySelector('#vertex').innerText;
+		const fsSource =  document.querySelector('#fragment').innerText;
+		
+		// 开启
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+		initShaders(gl, vsSource, fsSource);
+
+		// 声明颜色底色
+		gl.clearColor(0,0,0,0.1)
+		// 使用底色
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// 获取缓冲区对应的变量
+		const a_Position = gl.getAttribLocation(gl.program , 'a_Position')
+		const a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
+		const u_fragColor = gl.getUniformLocation(gl.program, 'u_fragColor')
+		const vertexBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer); // 绑定缓冲对象
+		gl.bufferData(gl.ARRAY_BUFFER, [], gl.STATIC_DRAW ); //写入数据
+		const a =1
+		// 不能用数组来看它，用不了扩展
+		const color = new Float32Array([Math.random(),Math.random(),Math.random(),a])
+		const ops = {x:0,y:0,s:50,a:1,n:.5};
+		const points = [];
+
+		// render();
+		const compose = new Compose();
+		
+		const text = '一闪一闪亮晶晶'.split('');
+		let index =0
+		canvas.addEventListener('click', ({clientX, clientY})=> {
+			if(Notification.permission === "granted"){
+				new Notification(text[index++ % 7])
+			}else{
+				Notification.requestPermission().then((permission)=> {
+					if (permission === "granted") {
+         var notification = new Notification("Hi there!");
+      }
+				})
+			}
+			const rect = canvas.getBoundingClientRect()
+			const {x,y, width, height} = rect;
+			// 
+			let [cssX,cssY] = [ clientX - x, clientY - y];
+			const [halfWidth, halfHeight] = [ width/2,height/2];
+			cssX -= halfWidth, cssY-= halfHeight
+			const [cx,cy ] = [cssX / halfWidth, -cssY / halfHeight];
+			const s= Math.random()* 3 + 1;
+			const a =1;
+			const r =Math.random();
+			const g =Math.random();
+			const b =Math.random();
+			const n = Math.random();
+
+			const obj = {x:cx,y:cy,s,a,r,g,b};
+			points.push(obj);
+			// render();
+			// 建立轨道对象
+			const track = new Track(obj);
+			track.start = new Date();
+			track.timeLen = 2000; // 原来是这里的变量拼错了
+			track.loop = true;
+			track.keyMap = new Map([
+		     	[
+					"a",
+                  [           
+				  [500, a],
+        		  [1000, 0],
+        		  [1500, a],
+                 ],
+		     ]
+			])
+			compose.add(track);
+
+		});
+
+
+		!(function ani(){
+			// debugger
+			compose.update(new Date());
+			// console.log(points, '原因就是a没变化') 
+			render();
+			requestAnimationFrame(ani);
+			// 这里不会死循环吗
+		})();
+
+		function render (){
+			gl.clear(gl.COLOR_BUFFER_BIT);
+			for( const {x,y,s, a,r,g,b} of points) {
+				gl.vertexAttrib2f(a_Position, x,y);
+				gl.vertexAttrib1f(a_PointSize, s);
+				// const color = new Float32Array([0.87, 0.91, 1,a])
+				const color = new Float32Array([r,g,b,a])
+				// 一个字母的差距 函数不同
+				// gl.uniform4f(u_fragColor,...color);
+				gl.uniform4fv(u_fragColor,color);
+				gl.drawArrays(gl.POINTS, 0, 1);
+				// gl.drawArrays(gl.LINE_STRIP, 0, points.length)
+			}
+		}
+
+		</script>
+</html>

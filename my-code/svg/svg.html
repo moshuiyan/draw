@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>svg</title>
+</head>
+
+<body>
+    <!-- svg viewBox x y w h xy 代表坐标原点的矢量位移 也就是说 10 10 代表其坐标原点在 （-10,-10） -->
+    <svg width="100" viewBox="0 0 50 100" fill="#000" xmlns='http://www.w3.org/2000/svg'>
+        <!-- 这是矢量相加小写，这种写法只需要改变起点的位置就能改变整幅画的位置，有点posion的意思    大写才是坐标定位 -->
+        <path d="m20,30 l 0, 50 l 5,5 l 5,-5 l 0, -50 l 5,0 l -5,-5 h -2  v -10
+                a 4 4 90 1 0 -6 0
+            v 10  h -2  l -5,5 h 5 v1 " fill="none" stroke="#aaa"></path>
+        <path d="m25,28 L 25, 82 " fill="none" stroke="#ccc"></path>
+    </svg>
+    <!-- x半轴半径 Y半轴半径  旋转角度（起点和终点不变，可认为绕圆心转，deg）  0表示小（于180）角度 1表示大角  0表示逆时针，1表示顺时针 （从起点到终点） ， 终点坐标 -->
+    <!-- a rx ry x-axis-rotation large-arc-flag sweep-flag dx dy -->
+    <!--  A rx ry x-axis-rotation large-arc-flag sweep-flag x y -->
+    <svg viewBox=" 0 0  200 200" width="300">
+        <g stroke="red" fill="none">
+
+            <path d="m0,0 l 50, 50 l 50,-50  "></path>
+            <!-- 用相对那么 终点和控制点都是相对 起点 -->
+            <path d="m0,0 q 50, 50  100,0  " stroke="#12adef"></path>
+            <path d="m0,0 c 50, 50 100,50  150,0  " stroke="#ad12ef"></path>
+        </g>
+    </svg>
+    <svg width="100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 110 ">
+        <circle r ="3" cx="27" cy="4" stroke="#000" fill="none"></circle>
+        <rect x="24" y="7" width="6" height="15" stroke="#000" fill="none" ></rect>    
+        <path d="M20,25 l -10,70 l 5,10 
+        a 60 60  0   0   0  20,-45 
+        l 0, -35" stroke="#000" stroke-width="1" fill="none" ></path>
+        <rect x="13" y="22" height="3" width="27" fill="none" stroke ="#000"></rect>
+    </svg>
+
+    <svg version="1.2" xmlns="http://www.w3.org/svg" viewBox="0 0 400 400">
+<!-- 二次曲线以前一个点作为起点 后接 控制点（切线交点）终点 q -->
+<!-- 三次曲线以前一个点作为起点 后接 控制点 控制点 终点  控制点控制的的是曲线在开始结束的切线方向  c-->
+        <path stroke="#000" stroke-width="40" fill="none" 
+        d="M10,10 c 100,0 100,200 190,200 s100,-200 190,-200"></path>
+        <rect x="10" y ="200" width="380" height="180" fill="red" stroke="#000" stroke-width="40"></rect>
+    </svg> 
+    <svg version="1.2" xmlns="http://www.w3.org/svg" viewBox="0 0 50 50 " style="background-color: black;">
+        <g fill="none" stroke="#fff" stroke-width="1">
+            <circle cx='50%' cy ='50%' r="49%" ></circle>
+            <path d="m 12.5,37.5 a 20 20  0  0  0 25 0 "></path>
+        </g>
+        <g fill="#fff">
+
+            <circle cx="12.5" cy = "20.5" r="5"></circle>
+            <circle cx="37.5" cy = "20.5" r ="5"></circle>
+        </g>
+    </svg>
+    <svg version="1.2" xmlns="http://www.w3.org/svg" viewBox="0 0 50 50 " >
+        <g fill="none" stroke="#000" stroke-width="1">
+            <circle cx='50%' cy ='50%' r="49%" ></circle>
+            <path d="m 12.5,37.5 a 20 20  0  0  1 25 0 "></path>
+        </g>
+        <g fill="#000">
+
+            <circle cx="12.5" cy = "20.5" r="5"></circle>
+            <circle cx="37.5" cy = "20.5" r ="5"></circle>
+        </g>
+    </svg>
+
+    <svg version="1.2" xmlns="http://www.w3.org/svg" viewBox="0 0 50 50 " >
+        <g fill="none" stroke="green" stroke-width="1">
+            <circle cx='50%' cy ='50%' r="49%" ></circle>
+            <path d="m 12.5,37.5 a 20 20  0  0  0 25 0 z"></path>
+            <path d="m 7,10 h11 m 14,0 h 11"></path>
+        </g>
+        <g fill="green">
+
+            <circle cx="12.5" cy = "20.5" r="5"></circle>
+            <circle cx="37.5" cy = "20.5" r ="5"></circle>
+        </g>
+    </svg>
+
+    <svg version="1.2" xmlns="http://www.w3.org/svg" viewBox="0 0 50 50 " >
+        <g fill="none" stroke="red" stroke-width="1">
+            <circle cx='50%' cy ='50%' r="49%" ></circle>
+            <path d="m 12.5,37.5 a 20 20  0  0  0 25 0 z"></path>
+            <path d="m 7,10 q 10 10 11,0 m 14,0 q 1,10 11,0"></path>
+        </g>
+        <g fill="red">
+
+            <circle cx="12.5" cy = "20.5" r="5"></circle>
+            <circle cx="37.5" cy = "20.5" r ="5"></circle>
+        </g>
+    </svg>
+
+    <svg version="1.2" xmlns="http://www.w3.org/svg" viewBox="0 0 50 50 " >
+        <g fill="none" stroke="yellow" stroke-width="1">
+            <circle cx='50%' cy ='50%' r="49%" ></circle>
+            <path d="m 12.5,37.5 a 20 20  0  0  0 25 0 "></path>
+            <path d="m 7,13 q 10 -10 11,0 m 14,0 q 1,-10 11,0"></path>
+        </g>
+        <g fill="yellow">
+
+            <circle cx="12.5" cy = "20.5" r="5"></circle>
+            <circle cx="37.5" cy = "20.5" r ="5"></circle>
+        </g>
+    </svg>
+    <canvas id="sd"></canvas>
+</body>
+<script>
+    const canvas =  document.getElementById('sd');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 600 ;
+    canvas.height = 600;
+    ctx.beginPath();
+    ctx.strokeStyle = 'red';
+    ctx.moveTo(300,100);
+    ctx.arc(220,100, 80,0,Math.PI, true); // 逆时针才是true
+    ctx.moveTo(140,100);
+    ctx.quadraticCurveTo(140, 200, 300, 300);
+    ctx.quadraticCurveTo(460, 200, 460, 100);
+    ctx.arc(380,100,80, 0,Math.PI,true)
+    
+
+    ctx.stroke();
+    ctx.strokeStyle = '#000';
+    ctx.beginPath();
+    ctx.translate(-200,0);
+
+    ctx.moveTo(540, 100);
+    ctx.bezierCurveTo(540, 0, 380, 0, 380, 100);
+    ctx.quadraticCurveTo(380,200, 540,300);
+    ctx.quadraticCurveTo(700,200, 700,100);
+    ctx.bezierCurveTo(700, 0, 540, 0, 540, 100);
+
+
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([2,2]);
+    ctx.translate(200,0);
+
+    ctx.moveTo(140,100);
+    ctx.lineTo(140, 200);
+    ctx.lineTo(300, 300);
+    ctx.lineTo(460, 200);
+    ctx.lineTo(460, 100);
+    
+
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ed2314';
+    ctx.beginPath();
+    ctx.translate(-200,0);
+
+    ctx.moveTo(540, 100);
+    ctx.lineTo(540, 0);
+    ctx.lineTo(380, 0);
+    ctx.lineTo(380, 100);
+    ctx.lineTo(380,200);
+    ctx.lineTo(540,300);
+    ctx.lineTo(800,200);
+    ctx.lineTo(800,300);
+    ctx.lineTo(800, 0);
+    ctx.lineTo(540, 0);
+    ctx.lineTo(540, 100);
+
+    ctx.stroke();
+    ctx.save();
+    
+
+</script>
+</html>

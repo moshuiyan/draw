@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异步</title>
+</head>
+<style>
+          body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #canvas {
+        background-color: antiquewhite;
+      }
+</style>
+<body>
+    <canvas width="700" height="700"></canvas>
+<!-- 顶点着色器 -->
+  <script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Position;
+    varying float v_Alpha;
+    void main(){
+      gl_Position  = a_Position;
+      gl_PointSize = 10.0 ;
+          }
+  </script>
+
+  <!-- 片元着色器 -->
+  <script type="x-shader/x-fragment" id="fragment">
+    void main (){
+      gl_FragColor = vec4(1,1,0,1);
+    }
+  </script>
+<script type="module">  
+import { initShaders } from './initShader.js' ;
+  const vertex  = document.querySelector('#vertex').textContent ;
+  const fragment = document.querySelector('#fragment').textContent;
+  const canvas = document.getElementsByTagName('canvas')[0];
+  const gl = canvas.getContext('webgl'); 
+  //初始化着色器
+  initShaders(gl, vertex, fragment) ;
+
+  
+  // 建立缓冲对象  空仓库
+  const buffer = gl.createBuffer()
+  // 绑定缓冲对象 gl.ARRAY_BUFFER: 包含顶点属性的缓冲区，例如顶点坐标、纹理坐标数据或顶点颜色数据。
+//  gl.ELEMENT_ARRAY_BUFFER：用于元素索引的缓冲区。
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+  const stars5  = [-0.2,0.5, 0.2,0.5, -0.16,-0.1, 0,0.9, 0.16,-0.1, ];
+  const points  = [0,0, -0.2,0, 0,0.5, 0.5,0.5, 0.8,0 ];
+  // 写入数据 GLenum (en-US) 指定数据存储区的使用方法。可取以下值：
+//gl.STATIC_DRAW: 缓冲区的内容可能经常使用，而不会经常更改。内容被写入缓冲区，但不被读取。
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points),gl.STATIC_DRAW);
+// get attrobute  
+const a_Position = gl.getAttribLocation(gl.program, 'a_Position')  ;
+// set attribute      （index, size, type, normalized, stride, offset);
+// 这里2 就是表示一个顶点的参数有两个
+gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+// 赋能 批处理
+gl.enableVertexAttribArray(a_Position);
+
+
+let size = 1 ;
+
+const interaval = setInterval(() => {
+  gl.clearColor(0,0,0,1);
+gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.POINTS, 0,size)
+gl.drawArrays(gl.LINE_LOOP, 0, size)
+/*第一个三角形按点的顺序来画，*/
+// gl.drawArrays(gl.TRIANGLES, 0,5) // 独立三角形 三个点一个三角形 不足则不画
+// gl.drawArrays(gl.TRIANGLE_FAN, 0, 5 ) //三角扇 以上一个三角的最后一边作为第一条边，反方向画
+gl.drawArrays(gl.TRIANGLE_STRIP, 0, size ) //三角带 以上一个三角的第二边作为第三条边，反方向画
+size++
+if (size > 5){  
+  clearInterval(interaval)
+}
+}, 800);
+
+</script>
+</body>
+</html>

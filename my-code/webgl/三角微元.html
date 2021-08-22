@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三角形的画法</title>
+</head>
+<body>
+		<canvas id="c2"></canvas>
+    
+</body>
+<script type="x-shader/x-vertex" id = "vertex">
+    attribute vec4 a_Position ;
+    attribute float a_PointSize;
+    void main(){
+        gl_Position = a_Position;
+      //  gl_PointSize = a_PointSize;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragment">
+    // 定义精度 
+    precision mediump float;
+    uniform vec4 u_fragColor;
+    void main (){
+        float dist  = distance(gl_PointCoord, vec2(0.5, 0.5));
+    //    if(dist <= 0.5 ){
+        gl_FragColor = u_fragColor;
+       // 要开启画线就不能对顶点的大小和片元的着色动手脚     
+ /*       }else {
+            discard;
+        }*/
+        
+    }
+</script>
+<script type="module">
+
+    import {initShaders} from './util/initShader.js'
+
+    const canvas = document.querySelector("#c2");
+		canvas.height = window.innerHeight -50 ;
+		canvas.width = window.innerWidth - 10 ;
+		const gl = canvas.getContext("webgl");
+		const vsSource = document.querySelector('#vertex').innerText;
+		const fsSource =  document.querySelector('#fragment').innerText;
+		
+		// 开启
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+		initShaders(gl, vsSource, fsSource);
+
+		// 声明颜色底色
+		gl.clearColor(0,0,0,0.1)
+		// 使用底色
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// 获取缓冲区对应的变量
+		const a_Position = gl.getAttribLocation(gl.program , 'a_Position')
+		// const a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
+		const u_fragColor = gl.getUniformLocation(gl.program, 'u_fragColor');
+        // gl.vertexAttrib1f(a_PointSize, 10);
+        gl.uniform4f(u_fragColor, 1,0.1,1,1);
+
+        // 写入多点
+        const ponitsFan = new Float32Array( [0,0, -0.1,0, -0.1,0.2, 0,0.2,  0.1,0.2, ])
+        const ponitsStrip = new Float32Array( [0,0 ,0.1,0, 0,0.3, 0.1,0.3, 0.1, 0.45])
+        const points = new Float32Array(  [0,0.5, -0.3,-0.3, 0.3, 0.3, -0.3,0.3, 0.3,-0.3]);
+        // 缓冲对象
+        const vertexBuffer = gl.createBuffer();
+        // 绑定 缓冲对象 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        // 写入数据
+        gl.bufferData(gl.ARRAY_BUFFER, ponitsStrip, gl.STATIC_DRAW);
+        // 修改顶点坐标        index, size, type, normalized, stride, offset
+        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+    // 赋能批处理
+        gl.enableVertexAttribArray(a_Position);
+
+                                                      
+        gl.drawArrays(gl.POINTS,0,5) // 
+        // gl.drawArrays(gl.LINE_LOOP,0,5) // 封闭多段线
+        // gl.drawArrays(gl.LINE_STRIP, 0, 5) // 不闭合多段线
+        // gl.drawArrays(gl.TRIANGLES, 0, 6) // 填充的三角形 四个点结果直接忽略了第四个点,6个就直接两个三角形 没有关联
+        // gl.drawArrays(gl.TRIANGLE_FAN, 0, 5) //  ， 下一个三角形以上一个三角形的第三条边 相反方向（下一个的第一个条边） 三角扇
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 5) // ， 下一个三角形以上一个三角形的第二条边起始相反方向（下一个的最后一条边）  下一个点为第二个点 三角扇
+</script>
+</html>

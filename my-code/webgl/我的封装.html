@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用自己的封装</title>
+</head>
+<body>
+    <canvas id="c1" width="700"  height="800"></canvas>
+</body>
+<!-- 顶点着色器 -->
+<script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec4 a_Position ;
+    void main () {
+        gl_Position =a_Position;
+        gl_PointSize = 20.0 ;
+    }
+</script>
+<!-- 如果MIME类型不是JavaScript类型（上述支持的类型），则该元素所包含的内容会被当作数据块而不会被浏览器执行。 -->
+<!-- 片元 着色器 -->
+<script id="fragmentShader" type="x-shader/x-fragment">
+    void main () {
+        gl_FragColor = vec4(1,0,1,1);
+    }
+</script>
+<script type="module">
+    import {initShaders, getMousePosInWebgl} from './util/initShader.js';
+    import Poly from './util/Poly-1.js' ;
+    const canvas =  document.getElementById('c1');
+    const gl = canvas.getContext("webgl2") ||
+      canvas.getContext("webgl") ||
+      canvas.getContext("experimental-webgl");
+//  获取着色器文本
+const vsSource = document.getElementById('vertexShader').textContent;
+const fsSource = document.getElementById('fragmentShader').textContent;
+// 初始化
+initShaders(gl, vsSource, fsSource);
+
+gl.clearColor(0, 0, 0, 0.1);
+gl.clear(gl.COLOR_BUFFER_BIT);
+
+const poly = new Poly( {
+    gl,
+    types: ['POINTS', 'LINE_STRIP'],
+    vertices:[0,0],
+
+})
+poly.draw();
+    const points = [[-0.2,0],[ -0.2,0.2], [ 0,0.2],[ 0.2,0.2],,[ 0.2,0]]
+let start= performance.now() ,index = 0;
+ function render(step) {
+    //  if (!start){ start = step}
+        if (step - start > 50){
+            start = step ;
+            poly.addVertice(...points[index]);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            poly.draw(['POINTS', 'LINE_STRIP'])
+            index++
+            if (  index >= points.length) {
+                return ;
+            }
+        }
+        requestAnimationFrame(render)
+
+ }
+ render()
+// const inter1 =  setInterval(() => {
+//              poly.addVertice(...points[index]);
+//             gl.clear(gl.COLOR_BUFFER_BIT);
+//             poly.draw(['POINTS', 'LINE_STRIP'])
+//             index++
+//             (index >= points.length) && (clearInterval(inter1))
+// }, 500);
+canvas.addEventListener('click', (e)=> {
+    const { x,y} = getMousePosInWebgl(e, canvas);
+    poly.addVertice(x,y);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    poly.draw()
+})
+</script>
+</html>

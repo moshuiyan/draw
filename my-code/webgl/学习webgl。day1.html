@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* canvas {
+            height: 500px;
+            width: 50vw;
+            margin: 200px auto;
+            background-color: antiquewhite;
+        } */
+        
+    </style>
+</head>
+<body>
+    <h1>早该意识到canvas是个行内元素，而且还不是行内块，但是可以有宽高，这和行内块似乎。。。</h1>
+    <canvas width="300" height="300" id="canvas"></canvas><img src="./spin.gif" alt=""><span>看来3d 和2d 只能选一个。同一个canvas元素</span>
+    <span>其中r、g、b的值域是[0,255]，</span>
+    <canvas width="500" height="300" id="c2"></canvas>
+</body>
+<script  src="../crystalocean-three.js-master/three.js/build/three.js"></script>
+<script type="module">
+    import {Color} from '../crystalocean-three.js-master/three.js//build/three.module.js'
+    window.addEventListener('load', () => {
+        const canvas = document.getElementById('canvas');
+        const c2 = document.getElementById('c2')
+        const ctx = canvas.getContext('2d');// 看来3d 和2d 只能选一个。同一个canvas元素
+        // const gl = canvas.getContext('webgl');
+        // let color = 'rgba(213,122,43,.5)';
+        // let glcolor = transformColor(color)
+        // gl.clearColor(...glcolor)//声明颜色
+        // gl.clear(gl.COLOR_BUFFER_BIT);//刷底色
+
+        ctx.fillStyle = '#aee123';
+        ctx.fillRect(20,30,100,100)//(x,y,w,h)
+
+        let c2_gl = c2.getContext('webgl')
+        const color_c2 = new Color(1,0,0,0);
+        !(function ani() {
+            color_c2.offsetHSL(0.005, 0, 0);
+            c2_gl.clearColor(color_c2.r, color_c2.g, color_c2.b, 1);
+            c2_gl.clear(c2_gl.COLOR_BUFFER_BIT);
+            requestAnimationFrame(ani);
+        })();
+
+    })
+    function transformColor(color){
+        const reg = RegExp(/\((.*)\)/);
+        const rgbastr = reg.exec(color)[1];
+        const res = rgbastr.split(',').map((el)=> parseInt(el) / 255)
+        res[3] *= 255
+        return res
+
+    }
+</script>
+</html>

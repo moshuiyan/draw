@@ -18,9 +18,9 @@
     </style>
 </head>
 <body>
-    <div class="clock-bg">
+    <!-- <div class="clock-bg">
         
-    </div>
+    </div> -->
     <canvas style="position: absolute;  top: 0;"  width="700" height="700"></canvas>
     <svg id="sg1"></svg>
 
@@ -40,7 +40,7 @@
 
     p1.then(ratio => {
         // drawbg(ratio)
-        draw(ratio);
+        draw();
     })
     const ctx = document.getElementsByTagName('canvas')[0].getContext('2d');
     let radial = ctx.createRadialGradient(0,0,85,0,0,100);
@@ -81,7 +81,8 @@ function drawbg(ratio) {
     //上面的坐标旋转了 90度，所以这里 x -> -y  y->x ,还是要转回去
     // 用了动画这个背景图就没出来 似乎一直卡在哪里 ，调试都打不开了 所以先画静态背景
     ctx.rotate(Math.PI/2);
-    ctx.drawImage(bg,-140 ,-180/ratio, 300,300/ratio)
+    const {width, height} = bg ;
+    ctx.drawImage(bg,-width/4 , -height/4, width/2,height/2)
     ctx.restore();
     
     // ctx.fill()
@@ -240,11 +241,10 @@ function draw(timestap){
     ctx.clearRect(0,0,700,700)
     drawbg();
     drawClock()
-        requestAnimationFrame(draw)
-    }else {
+    }
         requestAnimationFrame(draw)
       
-    }
+    
 
 
 }

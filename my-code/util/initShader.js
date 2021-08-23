@@ -82,7 +82,7 @@ export  class Compose {
     const { left, top, width, height } = canvas.getBoundingClientRect();
     const [cssX, cssY] = [clientX - left, clientY - top];
     //解决坐标原点位置的差异
-    const [halfWidth, halfHeight] = [width / 2, height / 2];
+    const [halfWidth, halfHeight] = [width / 2, height / 2];// 这就是坐标原点
     const [xBaseCenter, yBaseCenter] = [
       cssX - halfWidth,
       cssY - halfHeight,

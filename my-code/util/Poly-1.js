@@ -33,11 +33,29 @@ export default class Poly {
         this.updateBuffer();
 
     }
-    popVertice() {  //这个删除逻辑居然只保留一个点的数据
+    popVertice() {  //这个删除逻辑 就是删除后面size个元素
         const { vertices, size} = this;
         const len = vertices.length;
         vertices.splice(len-size,len);
         this.updateCount()
+    }
+    setVertice(index, ...params) {  // 这种写法像splice，不过这里增删相抵即为修改
+        const {vertices, size} = this ;
+        const i = size * index ;
+        params.forEach( (el, ind) => {
+            vertices[ind + i] = el ;
+        })
+    }
+    updateVertices(params){ // 要更新的key值,用对象数组来更新原始数组
+        const {geoData} = this ;
+        const vertices = [] ;
+        geoData.forEach(el => {
+            params.forEach( key => {
+               vertices.push(el[key]) ;  
+            })
+        })
+
+        this.vertices = vertices ;
     }
 
     updateBuffer() {

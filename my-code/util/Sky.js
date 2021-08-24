@@ -19,7 +19,7 @@ export default class Sky {
     draw() {
         this.children.forEach( el => {
             el.init();
-            init.draw() ;
+            el.draw() ;
         })
     }
 }

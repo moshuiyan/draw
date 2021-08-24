@@ -3,9 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" href="../xiaoxuancai.svg" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>lion</title>
 </head>
+<style>
+     #c1 {
+        background: url("./images/sky.jpg");
+        background-size: cover;
+        background-position: right bottom;
+      }
+</style>
 <body>
     <canvas id="c1"></canvas>
 </body>
@@ -14,7 +22,7 @@
     attribute vec4 a_Attr ;
     varying float v_Alpha ;
     void main() {
-        gl_Position = vec4(a_Attr.x,a.Attr.y, 0.0, 1.0) ;
+        gl_Position = vec4(a_Attr.x,a_Attr.y, 0.0, 1.0) ;
         gl_PointSize = a_Attr.z ;
         v_Alpha = a_Attr.w ;
     }
@@ -33,10 +41,14 @@ void main() {
 }
 
 </script>
+
 <script type="module" >
 import{ initShaders,getMousePosInWebgl } from '../util/initShader.js';
 import Poly from '../util/Poly-1.js' ;
 import Sky from '../util/Sky.js' ;
+import Compose from '../util/compose.js' ;
+import Track from '../util/Track.js';
+
 
 const canvas = document.getElementById('c1');
 canvas.height = window.innerHeight ;
@@ -45,15 +57,21 @@ canvas.width = window.innerWidth ;
 const gl = canvas.getContext('webgl') ;
 const vs = document.getElementById('vertex').textContent ;
 const fs = document.getElementById('fragment').textContent ;
+
+gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
 initShaders(gl, vs, fs) ;
 
-gl.clearColor(0, 0, 0, 0.2);
+gl.clearColor(0, 0, 0, 1);
 gl.clear(gl.COLOR_BUFFER_BIT) ;
 
-
+// 合成对象；
+const compose = new Compose();
 
 const sky = new Sky(gl) ;
 let poly = null ;
+let point = null // 鼠标划上的点
 canvas.oncontextmenu = () => false ;
 // 0 为左键、1 为中键、2 为右键。只有左键才会click
 canvas.addEventListener('mousedown', (e) => {
@@ -68,25 +86,38 @@ canvas.addEventListener('mousedown', (e) => {
             crtPoly(x,y) ;
        }else {
         //    继续当前路径
-            poly.addVertice(x,y)
+            // poly.addVertice(x,y) //现在的分量是4 所以两个参数就要点两次才有有一个点
+        addVertex(x,y);
         }
+        render()      ;
     }
-        render()
 })
 canvas.addEventListener('mousemove', (e)=> {
 if(!poly) return ;
 const {x,y} = getMousePosInWebgl(e,canvas);
 // poly.addVertice(x,y) 这样会不断描点划线
-poly.setVertice(poly.count -1,x,y)
-render()
+//  poly.setVertice(poly.count -1,x,y)
+ const obj = poly.geoData[poly.geoData.length - 1];
+ obj.x =x;
+ obj.y =y;
+//  render()
 })
 
+
+function random(){ return Math.random()*8 + 3}
 function crtPoly(x,y) {
- poly =new Poly({
-    vertices: [x,y],
+    let o1 = point?point: {x,y,pointSize:random(),alpha:1};
+    const o2 = { x,y, pointSize:random(), alpha:1};
+    poly =new Poly({
+    attrName: 'a_Attr',
+    size:4,
+    geoData: [o1,o2],
     types: ['POINTS','LINE_STRIP']
 })
-sky.add(poly)
+sky.add(poly);
+crtTrack(o1);
+crtTrack(o2);
+
 }
 
 function popVertice() { //删除当前path最后一个点位，并结束
@@ -95,9 +126,61 @@ poly.popVertice() ;
 poly = null
 }
 
+
+function addVertex(x,y){
+    const  {geoData} = poly ;
+    if(point) {
+        geoData[geoData.length -1] = point;
+    }
+    let obj =  {x,y, pointSize:random(), alpha:1}
+    ;
+    geoData.push(obj);
+    crtTrack(obj)
+
+}
+
 function render() {
+    // sky.updateVertices(['x','y','pointSize', 'alpha'])
+
 gl.clear(gl.COLOR_BUFFER_BIT);
 sky.draw() ;
 }
+
+
+!(function ani(){
+        compose.update(new Date())
+        sky.updateVertices(['x','y','pointSize','alpha'])
+        render()
+        requestAnimationFrame(ani)
+      })();
+
+
+   function crtTrack(obj){
+        const {pointSize}=obj
+        const track = new Track(obj)
+        track.start = new Date()
+        track.timeLen = 2000
+        track.loop = true
+        track.keyMap = new Map([
+          [
+            "pointSize",
+            [
+              [500, pointSize],
+              [1000, 0],
+              [1500, pointSize],
+            ],
+          ],
+          [
+            "alpha",
+            [
+              [500, 1],
+              [1000, 0],
+              [1500, 1],
+            ],
+          ],
+        ]);
+        compose.add(track)
+      }
+
 </script>
 </html>

@@ -17,16 +17,24 @@
         gl_PointSize = 20.0 ;
     }
 </script>
+<!-- 这谷歌浏览器，版本低了用这种圆点，居然画不出线 -->
 <!-- 如果MIME类型不是JavaScript类型（上述支持的类型），则该元素所包含的内容会被当作数据块而不会被浏览器执行。 -->
 <!-- 片元 着色器 -->
 <script id="fragmentShader" type="x-shader/x-fragment">
+    precision mediump float;
+  
     void main () {
-        gl_FragColor = vec4(1,0,1,1);
+        float dist=distance(gl_PointCoord,vec2(0.5,0.5));
+        if(dist<0.5){
+          gl_FragColor=vec4(1,0,1,1);
+        }else{
+          discard;
+        }
     }
 </script>
 <script type="module">
-    import {initShaders, getMousePosInWebgl} from './util/initShader.js';
-    import Poly from './util/Poly-1.js' ;
+    import {initShaders, getMousePosInWebgl} from '../util/initShader.js';
+    import Poly from '../util/Poly-1.js' ;
     const canvas =  document.getElementById('c1');
     const gl = canvas.getContext("webgl2") ||
       canvas.getContext("webgl") ||

@@ -5,7 +5,9 @@ const  defAttr = () => ({   //默认值   原来是返回一个对象的方法
     size: 2,      //  分量数
     attrName: 'a_Position',
     count: 0,    // 点数
-    types: ['POINTS']    // 绘图方式
+    types: ['POINTS'],    // 绘图方式
+    circleDot:true,
+    u_IsPOINTS:null
 });
 
 export default class Poly {
@@ -15,7 +17,7 @@ export default class Poly {
         this.init()
     }
     init() {
-        const {attrName, size, gl} = this;
+        const {attrName, size, gl, circleDot} = this;
         if(!gl) { return ; }
         const vertexBuffer  = gl.createBuffer();
         // gl.bindBuffer(target, buffer)
@@ -26,6 +28,9 @@ export default class Poly {
         gl.vertexAttribPointer(a_Position, size, gl.FLOAT, false, 0, 0);
         // 赋能批处理
         gl.enableVertexAttribArray(a_Position);
+        if (circleDot) {
+            this.u_IsPOINTS = gl.getUniformLocation(gl.program,'u_IsPOINTS')
+        }
     }
 
     addVertice(...params) {
@@ -70,8 +75,9 @@ export default class Poly {
         this.count = (this.vertices.length / this.size ) | 0 ;
     }
     draw( types = this.types) {
-        const {gl, count} = this ;
+        const {gl, count,circleDot,u_IsPOINTS} = this ;
         for (const  type of types) {
+        circleDot && gl.uniform1f(u_IsPOINTS, type === 'POINTS')
             gl.drawArrays(gl[type], 0, count)
         }
     }

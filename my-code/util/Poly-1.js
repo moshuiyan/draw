@@ -6,7 +6,7 @@ const  defAttr = () => ({   //默认值   原来是返回一个对象的方法
     attrName: 'a_Position',
     count: 0,    // 点数
     types: ['POINTS'],    // 绘图方式
-    circleDot:true,
+    circleDot:false,    // 是否启用圆点
     u_IsPOINTS:null
 });
 
@@ -51,7 +51,7 @@ export default class Poly {
             vertices[ind + i] = el ;
         })
     }
-    updateVertices(params){ // 要更新的key值,用对象数组来更新原始数组
+    updateVertices(params){ // 要更新的key值,用对象数组来更新原始数组 ,调这个就是用对象数组
         const {geoData} = this ;
         const vertices = [] ;
         geoData.forEach(el => {

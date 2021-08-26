@@ -9,7 +9,7 @@
 		/* background: url(https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg) no-repeat center 
 			rgba(17, 20, 71, 0.637) 	 */
 		#c2 {
-				background: url(./xiaoxuancai.svg) top center no-repeat
+				background: url(../xiaoxuancai.svg) top center no-repeat
 				rgba(17, 20, 71, 0.637) ;
 		}
 		.audio {
@@ -75,9 +75,9 @@
 		}
 	</script>
 	<script type="module">
-		import {initShaders} from './util/initShader.js'
-		import Compose from './util/compose.js';
-		import Track from './util/Track.js';
+		import {initShaders} from '../util/initShader.js'
+		import Compose from '../util/compose.js';
+		import Track from '../util/Track.js';
 
 	
 		const canvas = document.querySelector("#c2");
@@ -87,10 +87,12 @@
 		const vsSource = document.querySelector('#vertex').innerText;
 		const fsSource =  document.querySelector('#fragment').innerText;
 		
-		// 开启
+		// 开启某种特性  blend激活片元的颜色融合计算
 		gl.enable(gl.BLEND);
+		// 定义了一个用于混合像素算法的函数  源  目标
+		// 将所有颜色乘以源alpha值.   每个源颜色所有颜色乘1
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
+//  初始化着色器就是创建 顶点片元着色 装进program 里 然后编译回js 
 		initShaders(gl, vsSource, fsSource);
 
 		// 声明颜色底色
@@ -99,15 +101,17 @@
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
 		// 获取缓冲区对应的变量
-		const a_Position = gl.getAttribLocation(gl.program , 'a_Position')
+		const a_Position  = gl.getAttribLocation(gl.program , 'a_Position')
 		const a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
 		const u_fragColor = gl.getUniformLocation(gl.program, 'u_fragColor')
+
+		//创建并初始化一个用于储存顶点数据或着色数据的WebGLBuffer对象
 		const vertexBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer); // 绑定缓冲对象
 		gl.bufferData(gl.ARRAY_BUFFER, [], gl.STATIC_DRAW ); //写入数据
 		const a =1
-		// 不能用数组来看它，用不了扩展
-		const color = new Float32Array([Math.random(),Math.random(),Math.random(),a])
+		// 不能用数组来看它，定长，不能动态增加
+		const color = new Float32Array([Math.random(),Math.random(),Math.random(),a]);
 		const ops = {x:0,y:0,s:50,a:1,n:.5};
 		const points = [];
 
@@ -145,7 +149,7 @@
 			// render();
 			// 建立轨道对象
 			const track = new Track(obj);
-			track.start = new Date();
+			track.start = performance.now();
 			track.timeLen = 2000; // 原来是这里的变量拼错了
 			track.loop = true;
 			track.keyMap = new Map([
@@ -162,10 +166,10 @@
 
 		});
 
-
+ //performance.timing.navigationStart + performance.now() 约等于 Date.now()。 也就是它是相对于某个起点的毫秒数
 		!(function ani(){
 			// debugger
-			compose.update(new Date());
+			compose.update( performance.now());
 			// console.log(points, '原因就是a没变化') 
 			render();
 			requestAnimationFrame(ani);

@@ -17,38 +17,26 @@
 
 </body>
 <script type="x-shader/x-vertex" id="vertex">
-    attribute vec4 a_Attr ;
-    varying float v_Alpha ;
+    attribute vec4 a_Position ;
     void main() {
-        gl_Position = vec4(a_Attr.x,a_Attr.y, 0.0, 1.0) ;
-        gl_PointSize = a_Attr.z ;
-        v_Alpha = a_Attr.w ;
+        gl_Position = a_Position ;
+        gl_PointSize = 10.0 ;
     }
 </script>
 <script type="x-shader/x-fragment" id="fragment">
-precision mediump float ;
-varying float v_Alpha ;
-uniform bool u_IsPOINTS ;
 
 void main() {
-    float dist = distance(gl_PointCoord, vec2(0.5,0.5)) ;
-    if (u_IsPOINTS){
 
-        if(dist < 0.5) {
-            gl_FragColor = vec4(0.87,0.91,1.0,v_Alpha) ;
-        }else {
-            discard ;
-        }
-    }else {
-        gl_FragColor = vec4(0.87,0.91,1.0,v_Alpha) ;
+        gl_FragColor = vec4(0.87,0.0,1.0,1) ;
 
-    }
+    
 }
 
 </script>
 <script type="module">
- import{ initShaders,getMousePosInWebgl } from '../util/initShader.js';
+ import{ initShaders,ScaleLinear } from '../util/initShader.js';
 import Poly from '../util/Poly-1.js' ;
+import ShapeGeo from '../util/ShapeGeo.js'
 import Sky from '../util/Sky.js' ;
 import Compose from '../util/compose.js' ;
 import Track from '../util/Track.js';
@@ -61,6 +49,79 @@ canvas.width = window.innerWidth ;
 const gl = canvas.getContext('webgl') ;
 const vs = document.getElementById('vertex').textContent ;
 const fs = document.getElementById('fragment').textContent ;
+initShaders(gl,vs,fs)
+gl.clearColor(0, 0, 0, 1)
+gl.clear(gl.COLOR_BUFFER_BIT);
+
+
+    //路径G-逆时针
+    const pathData = [
+      0, 0,
+      0, 600,
+      600, 600,
+      600, 200,
+      200, 200,
+      200, 400,
+      300, 400,
+      300, 300,
+      500, 300,
+      500, 500,
+      100, 500,
+      100, 100,
+      600, 100,
+      600, 0,
+    ];
+
+    const ratio = canvas.width / canvas.height ;
+    const rectH= 1.0 ;
+    const rectW = rectH / ratio ; //为啥是除
+    //正方形宽高的一半
+    const [halfRectW, halfRectH] = [rectW / 2, rectH / 2];
+    //两个极点
+    const minX = -halfRectW;
+    const minY = -halfRectH;
+    const maxX = halfRectW;
+    const maxY = halfRectH;
+  //正方形
+   const rect = new Poly({
+      gl,
+      vertices: [
+        minX, maxY,
+        minX, minY,
+        maxX, minY,
+        maxX, maxY,
+      ],
+    });
+    rect.draw() ;
+    //建立比例尺
+    const scaleX = ScaleLinear(
+      0, minX,
+      600, maxX
+    );
+    const scaleY = ScaleLinear(
+      0, maxY,
+      600, minY
+    );
+
+     //将路径G中的像素数据解析为webgl数据
+     const glData = [];
+    for (let i = 0; i < pathData.length; i += 2) {
+      glData.push(scaleX(pathData[i]), scaleY(pathData[i + 1]));
+    }
+    const path = new Poly({
+      gl,
+      vertices: glData,
+      types: ["POINTS", "LINE_LOOP"],
+    });
+    path.draw();
+
+    const shapeGeo = new ShapeGeo(glData)
+    const face = new Poly({
+      gl,
+      vertices: shapeGeo.vertices,
+      types: ["TRIANGLES"],
+    });
+    face.draw();
 
 </script>
 </html>

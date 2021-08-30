@@ -111,11 +111,12 @@ gl.clear(gl.COLOR_BUFFER_BIT);
     const path = new Poly({
       gl,
       vertices: glData,
-      types: ["POINTS", "LINE_LOOP"],
+      types: ["POINTS", "LINE_LOOP",],
     });
     path.draw();
 
     const shapeGeo = new ShapeGeo(glData)
+    console.log(shapeGeo);
     const face = new Poly({
       gl,
       vertices: shapeGeo.vertices,

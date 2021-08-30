@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" href="../xiaoxuancai.svg" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+        }
+    </style>
+</head>
+<body >
+    <canvas id="c1"></canvas>
+
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Attr ;
+    varying float v_Alpha ;
+    void main() {
+        gl_Position = vec4(a_Attr.x,a_Attr.y, 0.0, 1.0) ;
+        gl_PointSize = a_Attr.z ;
+        v_Alpha = a_Attr.w ;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragment">
+precision mediump float ;
+varying float v_Alpha ;
+uniform bool u_IsPOINTS ;
+
+void main() {
+    float dist = distance(gl_PointCoord, vec2(0.5,0.5)) ;
+    if (u_IsPOINTS){
+
+        if(dist < 0.5) {
+            gl_FragColor = vec4(0.87,0.91,1.0,v_Alpha) ;
+        }else {
+            discard ;
+        }
+    }else {
+        gl_FragColor = vec4(0.87,0.91,1.0,v_Alpha) ;
+
+    }
+}
+
+</script>
+<script type="module">
+ import{ initShaders,getMousePosInWebgl } from '../util/initShader.js';
+import Poly from '../util/Poly-1.js' ;
+import Sky from '../util/Sky.js' ;
+import Compose from '../util/compose.js' ;
+import Track from '../util/Track.js';
+
+
+const canvas = document.getElementById('c1');
+canvas.height = window.innerHeight ;
+canvas.width = window.innerWidth ;
+
+const gl = canvas.getContext('webgl') ;
+const vs = document.getElementById('vertex').textContent ;
+const fs = document.getElementById('fragment').textContent ;
+
+</script>
+</html>

@@ -1,8 +1,8 @@
 export default class ShapeGeo {
     constructor(pathData = []){
-        this.pathData = pathData ;
+        this.pathData = pathData ;  // 路径点位数据
         this.geoData = [];
-        this.triangles =[];
+        this.triangles =[];  // 三角形数据
         this.vertices = [];
         this.parsePath();
         this.update();
@@ -26,7 +26,7 @@ export default class ShapeGeo {
     findTriangle(i){
         const {geoData, triangles} = this ;
         const len =  geoData.length;
-        if (len <= 3) {
+        if (len <= 3) {  // 小于3可不就是三角形  
             triangles.push([...geoData]);
         }else {
             const [i0,i1,i2] = [

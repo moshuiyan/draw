@@ -4,20 +4,49 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>三角形的画法</title>
+    <title>三角形的旋转</title>
 </head>
 <body>
 		<canvas id="c2"></canvas>
     
 </body>
+<!-- 这里的顶点数据居然是全部顶点的数据
+加上变幻就是全部变幻 ,前面加attribute 或 uniform 是为了js能获取操作
+这样写的变量不能赋初始值-->
+<!-- 旋转要确定 轴 方向，角度，一般来说如果旋转轴垂直屏幕朝外 则逆时针旋转角度值为正
+原来还是角坐标变化啊，用初始角加上旋转角得到旋转后的角，
+假设初始角a 距离r, 那就是（rcos(a),rsin(a）——>(r * cos(a+b),r *sin(a+b)) -->
+<!-- sin(a+ b) =  sina* cosb + sinb * cosa
+     cos(a+b) = cosa * cosb - sina * sinb    -->
+<!--△(x,y) = (
+     (sina* cosb + sinb * cosa - sina)*r,
+     (cosa * cosb + sina * sinb  -cosa)*r
+)  -->
+
+<!-- 
+    已知xy坐标及旋转角度b
+    (
+    x*cosb - y*sinb,
+    y*cosb + x* sinb
+) -->
+<!-- 那么问题来了，这里z坐标哪里来的 ，
+这个地方到底为啥是斜的，webgl坐标系本身相对屏幕不是z轴垂直吗-->
 <script type="x-shader/x-vertex" id = "vertex">
     attribute vec4 a_Position ;
+    //float angle = radians(30.0);
+   uniform float sinB ;
+   uniform float cosB ;
+   uniform float scale ;
     attribute float a_PointSize;
     void main(){
-        gl_Position = a_Position;
+        gl_Position.x =(a_Position.x * cosB - a_Position.y *sinB) ;
+        gl_Position.y =(a_Position.y * cosB + a_Position.x *sinB ) ;
+        gl_Position.z =a_Position.z * scale ;
+        gl_Position.w =1.0;
       //  gl_PointSize = a_PointSize;
     }
 </script>
+<!-- 这里的数据是怎么绑定的还是 要研究一下  -->
 <script type="x-shader/x-fragment" id="fragment">
     // 定义精度 
     precision mediump float;
@@ -64,7 +93,7 @@
 
         // 写入多点
         const ponitsFan = new Float32Array( [0,0, -0.1,0, -0.1,0.2, 0,0.2,  0.1,0.2, ])
-        const ponitsStrip = new Float32Array( [0,0 ,0.1,0, 0,0.3, 0.1,0.3, 0.1, 0.45])
+        const ponitsStrip = new Float32Array( [0,0 ,0.1,0, 0,0.1, 0.1,0.1, 0.1, 0.45])
         const points = new Float32Array(  [0,0.5, -0.3,-0.3, 0.3, 0.3, -0.3,0.3, 0.3,-0.3]);
         // 缓冲对象
         const vertexBuffer = gl.createBuffer();
@@ -84,5 +113,23 @@
         // gl.drawArrays(gl.TRIANGLES, 0, 6) // 填充的三角形 四个点结果直接忽略了第四个点,6个就直接两个三角形 没有关联
         // gl.drawArrays(gl.TRIANGLE_FAN, 0, 5) //  ， 下一个三角形以上一个三角形的第三条边 相反方向（下一个的第一个条边） 三角扇
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 5) // ， 下一个三角形以上一个三角形的第二条边起始相反方向（下一个的最后一条边）  下一个点为第二个点 三角扇
+
+        const sinB = gl.getUniformLocation(gl.program, 'sinB');
+        const cosB = gl.getUniformLocation(gl.program, 'cosB');
+        const scale = gl.getUniformLocation(gl.program, 'scale');
+        let x = 0;
+        !(function ani(){
+            // xyzw
+            gl.clear(gl.COLOR_BUFFER_BIT) // 清理画布
+            x+= 0.01 ;
+            gl.uniform1f(scale, Math.sin(x) + 1) ;
+            // x> 1 && (x = 0);
+            gl.uniform1f(cosB, Math.cos(x));
+            gl.uniform1f(sinB, Math.sin(x));
+            gl.uniform4f(u_fragColor, 1, 0.3,1,1)
+            gl.drawArrays(gl.POINTS,0,5) // 
+            gl.drawArrays(gl.TRIANGLE_STRIP,0,4) // 
+            requestAnimationFrame(ani) // 请求更新动画
+        })()
 </script>
 </html>

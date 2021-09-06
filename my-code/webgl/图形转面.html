@@ -93,10 +93,10 @@ gl.clear(gl.COLOR_BUFFER_BIT);
       ],
     });
     rect.draw() ;
-    //建立比例尺
+    //建立比例尺 css 到webgl坐标的映射 这里输入css输出webgl
     const scaleX = ScaleLinear(
-      0, minX,
-      600, maxX
+      0, minX, // css数据
+      600, maxX  // webgl
     );
     const scaleY = ScaleLinear(
       0, maxY,

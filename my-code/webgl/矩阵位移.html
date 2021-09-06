@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>矩阵变换</title>
+</head>
+<body>
+		<canvas id="c2"></canvas>
+    
+</body>
+<!-- 这里的顶点数据居然是全部顶点的数据
+加上变幻就是全部变幻 ,前面加attribute 或 uniform 是为了js能获取操作
+这样写的变量不能赋初始值-->
+<!-- 旋转要确定 轴 方向，角度，一般来说如果旋转轴垂直屏幕朝外 则逆时针旋转角度值为正
+原来还是角坐标变化啊，用初始角加上旋转角得到旋转后的角，
+假设初始角a 距离r, 那就是（rcos(a),rsin(a）——>(r * cos(a+b),r *sin(a+b)) -->
+<!-- sin(a+ b) =  sina* cosb + sinb * cosa
+     cos(a+b) = cosa * cosb - sina * sinb    -->
+<!--△(x,y) = (
+     (sina* cosb + sinb * cosa - sina)*r,
+     (cosa * cosb + sina * sinb  -cosa)*r
+)  -->
+
+<!-- 
+    已知xy坐标及旋转角度b
+    (
+    x*cosb - y*sinb,
+    y*cosb + x* sinb
+) -->
+<!-- 
+    矩阵的模就是行列式的值；对角线法则求值
+    矩阵乘法是前行后列相乘，这是行主序，也就是一行是一个向量 
+webgl 中是列主序，也就是一列一个向量，也就是说前列乘以后行-->
+<!--  -->
+<!-- 那么问题来了，这里z坐标哪里来的 ，
+这个地方到底为啥是斜的，原因是webgl坐标系 高宽是canvas元素的的高宽的一半，也就是基底不同，
+所以旋转的过程高宽可能没有保持原有比例，感觉就是偏了
+，webgl坐标系本身相对屏幕不是z轴垂直吗-->
+<!-- 这里变量写错了可没有提示，唉，谨慎 -->
+<!-- 这里的矩阵变换大多是矩阵乘向量，变换矩阵放在前面 
+ 因为是行列相乘，故而能影响到后面的行向量的必然是，前面对应列-->
+<script type="x-shader/x-vertex" id = "vertex">
+    attribute vec4 a_Position ;
+    float angle = radians(30.0);
+    float sinB  = sin(angle);
+    float cosB = cos(angle);
+    uniform mat4 u_m4; 
+   uniform float scale ;
+    void main(){
+        gl_Position = vec4(
+            u_m4* a_Position
+           
+        );
+
+    }
+</script>
+<!-- 这里的数据是怎么绑定的还是 要研究一下  -->
+<script type="x-shader/x-fragment" id="fragment">
+    // 定义精度 
+    precision mediump float;
+    uniform vec4 u_fragColor;
+    void main (){
+        float dist  = distance(gl_PointCoord, vec2(0.5, 0.5));
+        gl_FragColor = u_fragColor;
+
+    }
+</script>
+<script type="module">
+
+    import {initShaders} from '../util/initShader.js'
+
+    const canvas = document.querySelector("#c2");
+		canvas.height = window.innerHeight -50 ;
+		canvas.width = window.innerWidth - 10 ;
+		const gl = canvas.getContext("webgl");
+		const vsSource = document.querySelector('#vertex').innerText;
+		const fsSource =  document.querySelector('#fragment').innerText;
+		
+		// 开启
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+		initShaders(gl, vsSource, fsSource);
+
+		// 声明颜色底色
+		gl.clearColor(0,0,0,0.1)
+		// 使用底色
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// 获取缓冲区对应的变量
+		const a_Position = gl.getAttribLocation(gl.program , 'a_Position')
+		// const a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
+		const u_fragColor = gl.getUniformLocation(gl.program, 'u_fragColor');
+        // gl.vertexAttrib1f(a_PointSize, 10);
+        gl.uniform4f(u_fragColor, 1,0.1,1,1);
+
+        // 写入多点
+        const ponitsFan = new Float32Array( [0,0, -0.1,0, -0.1,0.2, 0,0.2,  0.1,0.2, ])
+        const ponitsStrip = new Float32Array( [0,0 ,0.1,0, 0,0.1, 0.1,0.1, 0.1, 0.45])
+        const points = new Float32Array(  [0,0.5, -0.3,-0.3, 0.3, 0.3, -0.3,0.3, 0.3,-0.3]);
+        // 缓冲对象
+        const vertexBuffer = gl.createBuffer();
+        // 绑定 缓冲对象 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        // 写入数据
+        gl.bufferData(gl.ARRAY_BUFFER, ponitsStrip, gl.STATIC_DRAW);
+        // 修改顶点坐标        index, size, type, normalized, stride, offset
+        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+    // 赋能批处理
+        gl.enableVertexAttribArray(a_Position);
+
+        const scale = gl.getUniformLocation(gl.program, 'scale');
+        const u_mat4 = gl.getUniformLocation(gl.program, 'u_m4');
+        let angle = 0.5,sinB = Math.sin(angle), cosB = Math.cos(angle) ;
+        const matrix = [
+            1, 1, 0, 0,
+            0, 1, 0, 0,
+            0 ,0, 1, 0,
+            0.1, 0.1, 0.1, 1
+        ];
+
+        /* 这里获取不存的gl变量也不会报错 */
+        gl.uniformMatrix4fv(u_mat4, false, matrix);
+                                                      
+        gl.drawArrays(gl.POINTS,0,5) // 
+        // gl.drawArrays(gl.LINE_LOOP,0,5) // 封闭多段线
+        // gl.drawArrays(gl.LINE_STRIP, 0, 5) // 不闭合多段线
+        // gl.drawArrays(gl.TRIANGLES, 0, 6) // 填充的三角形 四个点结果直接忽略了第四个点,6个就直接两个三角形 没有关联
+        // gl.drawArrays(gl.TRIANGLE_FAN, 0, 5) //  ， 下一个三角形以上一个三角形的第三条边 相反方向（下一个的第一个条边） 三角扇
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 5) // ， 下一个三角形以上一个三角形的第二条边起始相反方向（下一个的最后一条边）  下一个点为第二个点 三角扇
+
+
+    
+        let x = 0;
+        !(function ani(){
+            // xyzw
+            gl.clear(gl.COLOR_BUFFER_BIT) // 清理画布
+            angle+= 0.01 ;
+            // gl.uniform1f(scale, Math.sin(x) + 1) ;
+            // x> 1 && (x = 0);
+
+        const sinB = Math.sin(angle), cosB = Math.cos(angle) ;
+        const matrix = [
+            1, 1, 0, 0,
+            0, 1, 0, 0,
+            0 ,0, 1, 0,
+            sinB, cosB, 0.1, 1
+        ];
+            gl.uniformMatrix4fv(u_mat4, false, matrix);
+          
+            gl.uniform4f(u_fragColor, 1, 0.3,1,1)
+            gl.drawArrays(gl.POINTS,0,5) // 
+            gl.drawArrays(gl.TRIANGLE_STRIP,0,4) // 
+            requestAnimationFrame(ani) // 请求更新动画
+        })()
+</script>
+</html>

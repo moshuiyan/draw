@@ -4,17 +4,21 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>三角形的画法</title>
+    <title>三角形的平移</title>
 </head>
 <body>
 		<canvas id="c2"></canvas>
     
 </body>
+<!-- 这里的顶点数据居然是全部顶点的数据
+加上变幻就是全部变幻 ,前面加attribute 或 uniform 是为了js能获取操作
+这样写的变量不能赋初始值-->
 <script type="x-shader/x-vertex" id = "vertex">
     attribute vec4 a_Position ;
+    uniform vec4 u_transition ;
     attribute float a_PointSize;
     void main(){
-        gl_Position = a_Position;
+        gl_Position = a_Position + u_transition;
       //  gl_PointSize = a_PointSize;
     }
 </script>
@@ -84,5 +88,19 @@
         // gl.drawArrays(gl.TRIANGLES, 0, 6) // 填充的三角形 四个点结果直接忽略了第四个点,6个就直接两个三角形 没有关联
         // gl.drawArrays(gl.TRIANGLE_FAN, 0, 5) //  ， 下一个三角形以上一个三角形的第三条边 相反方向（下一个的第一个条边） 三角扇
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 5) // ， 下一个三角形以上一个三角形的第二条边起始相反方向（下一个的最后一条边）  下一个点为第二个点 三角扇
+
+        const u_transition = gl.getUniformLocation(gl.program, 'u_transition');
+        let x = 0;
+        !(function ani(){
+            // xyzw
+            gl.clear(gl.COLOR_BUFFER_BIT) // 清理画布
+            x+= 0.01 ;
+            x> 1 && (x = 0);
+            gl.uniform4f(u_fragColor, 1,x,1,1)
+            gl.uniform4f(u_transition, x,0,0,0)
+            gl.drawArrays(gl.POINTS,0,5) // 
+            gl.drawArrays(gl.TRIANGLE_STRIP,0,5) // 
+            requestAnimationFrame(ani) // 请求更新动画
+        })()
 </script>
 </html>

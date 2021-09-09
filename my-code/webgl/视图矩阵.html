@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="icon" type="image/x-icon" href="https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视图1</title>
+</head>
+<body>
+    <canvas id="c1"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Position ;
+    uniform mat4 u_ViewMatrix ;
+    void main() {
+        gl_Position = u_ViewMatrix * a_Position ;
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragment">
+    void main() {
+        gl_FragColor = vec4(0.1,1.0,1.0,1.0);
+    }
+</script>
+
+<script type="module">
+    import {Matrix4, Vector3, Quaternion} from '../../crystalocean-three.js-master/three.js/build/three.module.js' ;
+    import {initShaders} from '../util/initShader.js'
+
+        const canvas = document.querySelector("#c1");
+		canvas.height = window.innerHeight -50 ;
+		canvas.width = window.innerWidth - 10 ;
+		const gl = canvas.getContext("webgl");
+		const vsSource = document.querySelector('#vertex').innerText;
+		const fsSource =  document.querySelector('#fragment').innerText;
+		
+        initShaders(gl ,vsSource, fsSource) ;
+        const verticeLib = [
+              1.0, 1.0, 1.0,
+              -1.0, 1.0, 1.0,
+              -1.0, -1.0, 1.0,
+              1.0, -1.0, 1.0,
+              1.0, -1.0, -1.0,
+              1.0, 1.0, -1.0,
+              -1.0, 1.0, -1.0,
+              -1.0, -1.0, -1.0,
+        ];
+
+        const indices = [
+      0, 1,
+      1, 2,
+      2, 3,
+      3, 0,
+
+      0, 5,
+      1, 6,
+      2, 7,
+      3, 4,
+
+      4, 5,
+      5, 6,
+      6, 7,
+      7, 4
+    ];
+    const arr = new Array() ;
+    // 这里只是 把点位缩小至五分之一
+    indices.forEach( ( item) => {
+        const i = item * 3 ;
+        arr.push(
+            verticeLib[i] /5 ,
+            verticeLib[i + 1] /5 ,
+            verticeLib[i + 2] /5 ,
+        )
+    })
+    const  vertices =  new Float32Array(arr) ;
+
+    const vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer) ;
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+    const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_Position) ;
+		// 开启
+		// gl.enable(gl.BLEND);
+		// gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    const u_ViewMatrix  =gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    const matrix = lookAt(
+        new Vector3(-0.2, -0.2, 1),
+        new Vector3(0, 0, 0),
+        new Vector3(0, 1, 0),
+    )
+    gl.uniformMatrix4fv(u_ViewMatrix, false,matrix );
+    gl.clearColor(0.0,0.0,0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT) ;
+    gl.drawArrays(gl.LINES, 0, indices.length);
+    // console.log(u_ViewMatrix, a_Position); 直接打印是索引
+    console.log(matrix,vertices );
+    function lookAt(e, t, u) {
+      //目标点到视点的向量
+      const d = new Vector3().subVectors(e, t)
+      d.normalize()
+      //d和上方向的垂线
+      const a = new Vector3().crossVectors(u, d)
+      a.normalize()
+      //d和a的垂线
+      const b = new Vector3().crossVectors(d, a)
+      b.normalize()
+      //c 基于d取反
+      const c = new Vector3(-d.x, -d.y, -d.z)
+      return [
+        a.x, b.x, c.x, 0,
+        a.y, b.y, c.y, 0,
+        a.z, b.z, c.z, 0,
+        0, 0, 0, 1
+      ]
+    }
+</script>
+</html>

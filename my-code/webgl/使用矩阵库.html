@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用矩阵库</title>
+</head>
+<body>
+		<canvas id="c2"></canvas>
+    
+</body>
+
+<script type="x-shader/x-vertex" id = "vertex">
+    attribute vec4 a_Position ;
+    float angle = radians(30.0);
+    float sinB  = sin(angle);
+    float cosB = cos(angle);
+    uniform mat4 u_m4; 
+   uniform float scale ;
+    void main(){
+        gl_Position = vec4(
+            u_m4* a_Position
+           
+        );
+
+    }
+</script>
+<!-- 这里的数据是怎么绑定的还是 要研究一下  -->
+<script type="x-shader/x-fragment" id="fragment">
+    // 定义精度 
+    precision mediump float;
+    uniform vec4 u_fragColor;
+    void main (){
+        float dist  = distance(gl_PointCoord, vec2(0.5, 0.5));
+        gl_FragColor = u_fragColor;
+
+    }
+</script>
+<script type="module">
+    import {Matrix4} from '../../crystalocean-three.js-master/three.js/build/three.module.js' ;
+    import {initShaders} from '../util/initShader.js'
+
+    const canvas = document.querySelector("#c2");
+		canvas.height = window.innerHeight -50 ;
+		canvas.width = window.innerWidth - 10 ;
+		const gl = canvas.getContext("webgl");
+		const vsSource = document.querySelector('#vertex').innerText;
+		const fsSource =  document.querySelector('#fragment').innerText;
+		
+		// 开启
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+		initShaders(gl, vsSource, fsSource);
+
+		// 声明颜色底色
+		gl.clearColor(0,0,0,0.1)
+		// 使用底色
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// 获取缓冲区对应的变量
+		const a_Position = gl.getAttribLocation(gl.program , 'a_Position')
+		// const a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
+		const u_fragColor = gl.getUniformLocation(gl.program, 'u_fragColor');
+        // gl.vertexAttrib1f(a_PointSize, 10);
+        gl.uniform4f(u_fragColor, 1,0.1,1,1);
+
+        // 写入多点
+        const ponitsFan = new Float32Array( [0,0, -0.1,0, -0.1,0.2, 0,0.2,  0.1,0.2, ])
+        const ponitsStrip = new Float32Array( [0,0 ,0.1,0, 0,0.1, 0.1,0.1, 0.1, 0.45])
+        const points = new Float32Array(  [0,0.5, -0.3,-0.3, 0.3, 0.3, -0.3,0.3, 0.3,-0.3]);
+        // 缓冲对象
+        const vertexBuffer = gl.createBuffer();
+        // 绑定 缓冲对象 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        // 写入数据
+        gl.bufferData(gl.ARRAY_BUFFER, ponitsStrip, gl.STATIC_DRAW);
+        // 修改顶点坐标        index, size, type, normalized, stride, offset
+        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+    // 赋能批处理
+        gl.enableVertexAttribArray(a_Position);
+
+        const scale = gl.getUniformLocation(gl.program, 'scale');
+        const u_mat4 = gl.getUniformLocation(gl.program, 'u_m4');
+        let angle = 0.5,sinB = Math.sin(angle), cosB = Math.cos(angle) ;
+        const m4 = new Matrix4() ;
+        let m41 = new Matrix4().set(
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        )
+        /*  */
+        /* 这里是前行乘以后列，
+            所以 会影响到后面的列向量的
+            肯定是对应行的数据，又因为只有深度W的都是值是1
+            所以这里加法就写在了每行的第四位 */
+        //由此我认为用矩阵乘法实现 加法似乎不太方便 
+        /* 这里获取不存的gl变量也不会报错 */
+        gl.uniformMatrix4fv(u_mat4, false, m41.elements);
+                                                      
+        gl.drawArrays(gl.POINTS,0,5) // 
+        // gl.drawArrays(gl.LINE_LOOP,0,5) // 封闭多段线
+        // gl.drawArrays(gl.LINE_STRIP, 0, 5) // 不闭合多段线
+        // gl.drawArrays(gl.TRIANGLES, 0, 6) // 填充的三角形 四个点结果直接忽略了第四个点,6个就直接两个三角形 没有关联
+        // gl.drawArrays(gl.TRIANGLE_FAN, 0, 5) //  ， 下一个三角形以上一个三角形的第三条边 相反方向（下一个的第一个条边） 三角扇
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 5) // ， 下一个三角形以上一个三角形的第二条边起始相反方向（下一个的最后一条边）  下一个点为第二个点 三角扇
+
+
+    
+        let x = 0;
+        !(function ani(){
+            // xyzw
+            gl.clear(gl.COLOR_BUFFER_BIT) // 清理画布
+            angle+= 0.01 ;
+            x+= 0.1 ;
+            // gl.uniform1f(scale, Math.sin(x) + 1) ;
+            x> 1 && (x = 0);
+
+        const sinB = Math.sin(angle), cosB = Math.cos(angle) ;
+        const m4 = new Matrix4() ;
+        console.log(m4);
+        m4.makeRotationZ(angle) ;
+        console.log(m4);
+        const cm = new Matrix4().set(
+            1,0,0,1,
+            0,1,0,0,
+            0,0,1,0,
+            0,0,0,1
+        )
+        const sm = new Matrix4().makeScale(x,x,x)
+         const dm = cm.multiply(m4)   
+         const bm = sm.multiply(m4.multiply(dm))   
+        
+            gl.uniformMatrix4fv(u_mat4, false, bm.elements);
+          
+            gl.uniform4f(u_fragColor, 1, 0.3,1,1)
+            gl.drawArrays(gl.POINTS,0,5) // 
+            gl.drawArrays(gl.TRIANGLE_STRIP,0,4) // 
+            requestAnimationFrame(ani) // 请求更新动画
+        })()
+</script>
+</html>

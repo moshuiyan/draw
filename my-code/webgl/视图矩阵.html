@@ -127,8 +127,10 @@
             if (time -start > 500 ){
                 start = time ;
                 gl.clear(gl.COLOR_BUFFER_BIT);
-                gl.drawArrays(gl.LINES, 0, i++);
-                gl.drawArrays(gl.TRIANGLE_STRIP, 0, i++);
+                gl.drawArrays(gl.LINES, 0, i++);/* 
+                注意这里的点位 这里是绘制独立线段的，所以每两点就会重合
+                绘制三角形看不见应该是由于第一个三角形是顺时针绘制的， */
+                gl.drawArrays(gl.TRIANGLE_FAN, 0, i++);
                 requestAnimationFrame(step);
             }else {
                 requestAnimationFrame(step);

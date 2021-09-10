@@ -15,6 +15,7 @@
     uniform mat4 u_ViewMatrix ;
     void main() {
         gl_Position = u_ViewMatrix * a_Position ;
+        gl_PointSize = 10.0;
     }
 </script>
 
@@ -120,25 +121,45 @@
     // console.log(u_ViewMatrix, a_Position); 直接打印是索引
     console.log(matrix,vertices );
     let start = 0 ,i =1,m =1;
-    (function step(time){
-        start = start? start : time ;
-        if (i <= indices.length){
-            
-            if (time -start > 500 ){
-                start = time ;
+    canvas.addEventListener('click', drawTriangle)
+        function  drawTriangle(){
+        gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArrays(gl.POINTS, 0,i);
+        // gl.drawArrays(gl.TRIANGLE_FAN, 0,i)
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0,i)
+        i++
+    }
+    function step(){
+        
+        if (m <= indices.length){
+           
                 gl.clear(gl.COLOR_BUFFER_BIT);
-                gl.drawArrays(gl.LINES, 0, i++);/* 
+                gl.drawArrays(gl.POINTS, 0,i)
+                i <= indices.length && gl.drawArrays(gl.LINES, 0, i++);/* 
                 注意这里的点位 这里是绘制独立线段的，所以每两点就会重合
-                绘制三角形看不见应该是由于第一个三角形是顺时针绘制的， */
-                gl.drawArrays(gl.TRIANGLE_FAN, 0, i++);
-                requestAnimationFrame(step);
+                绘制三角形看不见应该是由于第一个三角形是顺时针绘制的，
+                非若是也 ,
+                前三个点是逆时针的，第二条边由两个重合的点组成，
+                因此下一个三角形
+                三角带以第二条边作为最后一条边 逆时针 画不出
+                但是三角扇 以第三条边，作为第一条边 反方向 可以画出*/
+                console.log(i,'i');
+                if(i > indices.length) { 
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                    gl.drawArrays(gl.LINES, 0, i)
+                    m++
+                    console.log(m,'m');
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, m);
+                    gl.drawArrays(gl.TRIANGLE_FAN, 0, m);
+                }
+                
             }else {
-                requestAnimationFrame(step);
+                
                 
             }
-        }
+        
 
-    })()
+    } ;
     // 这个应该是鼠标交互的关键
     function lookAt(e, t, u) {
       //目标点到视点的向量

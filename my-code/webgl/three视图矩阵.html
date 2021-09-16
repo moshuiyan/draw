@@ -5,16 +5,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="icon" type="image/x-icon" href="https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视图1</title>
+    <title>模型矩阵1</title>
 </head>
 <body>
     <canvas id="c1"></canvas>
 </body>
+<!-- 视图变换在后面 -->
 <script type="x-shader/x-vertex" id="vertex">
     attribute vec4 a_Position ;
     uniform mat4 u_ViewMatrix ;
+    uniform mat4 u_ModelMatrix ;
     void main() {
-        gl_Position = u_ViewMatrix * a_Position ;
+        gl_Position = u_ModelMatrix *  u_ViewMatrix * a_Position ;
         gl_PointSize = 10.0;
     }
 </script>
@@ -102,17 +104,20 @@
 		// 开启
 		// gl.enable(gl.BLEND);
 		// gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
+/* 模型矩阵就是用来对物体 模型 进行变换的 */
     const u_ViewMatrix  =gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    const u_ModelMatrix  =gl.getUniformLocation(gl.program, 'u_ModelMatrix');
     const matrix = new Matrix4().lookAt(
         new Vector3(-0.2, -0.2, 1),
         new Vector3(0, 0, 0),
         new Vector3(0, 1, 0),
     )
+    const modelMatrix = new Matrix4()
     /* location索引  transpose是否转置矩阵（必须否）， value定长数组（列主序）
         webgl是列主序，但是three的api输入是按行主序，
         他的el属性仍然是列主序 */
     gl.uniformMatrix4fv(u_ViewMatrix, false,matrix.elements );
+    gl.uniformMatrix4fv(u_ModelMatrix, false,modelMatrix.elements );
     gl.clearColor(0.0,0.0,0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT) ;
     /* 八个点是如何画出12条边 这里是24个点 画独立线段
@@ -174,24 +179,43 @@
      * e 视点
      * t 目标点
      */
-    function lookAt(e, t, u) {
-      //目标点到视点的向量
-      const d = new Vector3().subVectors(e, t) // 减法
-      d.normalize() // 应该是归一化  单位向量
-      //d和上方向的垂线
-      const a = new Vector3().crossVectors(u, d) // 叉乘
-      a.normalize()
-      //d和a的垂线
-      const b = new Vector3().crossVectors(d, a) // 
-      b.normalize()
-      //c 基于d取反
-      const c = new Vector3(-d.x, -d.y, -d.z)
-      return [
-        a.x, b.x, c.x, 0,
-        a.y, b.y, c.y, 0,
-        a.z, b.z, c.z, 0,
-        0, 0, 0, 1
-      ]
-    }
+    let angle = 0 ;
+    const minY = -0.7
+    const maxY = 0.7
+    let y = maxY
+    let vy = 0
+    const ay = -0.001
+    const bounce = 1;
+     (function moveLook(){
+        angle+=0.1 ;
+         let cosA = Math.cos(angle),
+             sinA = Math.sin(angle) ;
+        const matrix = new Matrix4().lookAt(
+        new Vector3(cosA, cosA, sinA),
+        new Vector3(0, 0, 0),
+        new Vector3(0, 1, 0),
+    )
+    vy += ay
+     y += vy
+        modelMatrix.setPosition(0,y,0)
+        if (modelMatrix.elements[13] < minY) {
+        y = minY
+        vy *= -bounce
+      }
+    /* location索引  transpose是否转置矩阵（必须否）， value定长数组（列主序）
+        webgl是列主序，但是three的api输入是按行主序，
+        他的el属性仍然是列主序 */
+    gl.uniformMatrix4fv(u_ViewMatrix, false,matrix.elements );
+    gl.uniformMatrix4fv(u_ModelMatrix, false,modelMatrix.elements );
+    gl.clearColor(0.0,0.0,0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT) ;
+    gl.drawArrays(gl.POINTS, 0, indices.length);
+    gl.drawArrays(gl.LINES, 0, indices.length);
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 1, indices.length -1);
+
+     requestAnimationFrame(moveLook) ;
+     })()
+      
+     
 </script>
 </html>

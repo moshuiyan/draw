@@ -112,7 +112,9 @@
         new Vector3(0, 0, 0),
         new Vector3(0, 1, 0),
     )
-    const modelMatrix = new Matrix4()
+    const modelMatrix = new Matrix4();
+    /* 可能是版本问题，这个版本的要传向量 */
+    modelMatrix.setPosition(new Vector3(0,0,0));
     /* location索引  transpose是否转置矩阵（必须否）， value定长数组（列主序）
         webgl是列主序，但是three的api输入是按行主序，
         他的el属性仍然是列主序 */
@@ -132,7 +134,7 @@
         function  drawTriangle(){
         gl.clear(gl.COLOR_BUFFER_BIT);
                 gl.drawArrays(gl.POINTS, 0,i);
-        // gl.drawArrays(gl.TRIANGLE_FAN, 0,i)
+        gl.drawArrays(gl.TRIANGLE_FAN, 0,i)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0,i)
         i++
     }
@@ -197,7 +199,7 @@
     )
     vy += ay
      y += vy
-        modelMatrix.setPosition(0,y,0)
+        modelMatrix.setPosition(new Vector3(0,sinA,0))
         if (modelMatrix.elements[13] < minY) {
         y = minY
         vy *= -bounce
@@ -211,7 +213,7 @@
     gl.clear(gl.COLOR_BUFFER_BIT) ;
     gl.drawArrays(gl.POINTS, 0, indices.length);
     gl.drawArrays(gl.LINES, 0, indices.length);
-    // gl.drawArrays(gl.TRIANGLE_STRIP, 1, indices.length -1);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 1, indices.length -1);
 
      requestAnimationFrame(moveLook) ;
      })()

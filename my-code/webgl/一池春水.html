@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="icon" type="image/x-icon" href="https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一池春水 </title>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Position ;
+    uniform mat4 u_ViewMatrix ;
+    uniform mat4 u_ModelMatrix ;
+    void main() {
+        gl_Position = u_ViewMatrix * u_ModelMatrix * a_Position ;
+        gl_PointSize = 3.0 ;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragment">
+    void main() {
+        gl_FragColor = vec4(1.5,1.0,1.0,1.0) ;
+    }
+</script>
+<script type="module">
+    import {Matrix4, Vector3, Quaternion,  Plane, Ray} from '../../crystalocean-three.js-master/three.js/build/three.module.js' ;
+    import {initShaders, getMousePosInWebgl, ScaleLinear} from '../util/initShader.js'
+    import Poly from '../util/Poly-1.js' ;
+
+    const canvas = document.getElementById('ca1') ;
+    const vs = document.getElementById('vertex').textContent ;
+    const fs = document.getElementById('fragment').textContent ;
+    canvas.height = window.innerHeight -50 ;
+    canvas.width = window.innerWidth -50 ;
+
+    const gl = canvas.getContext('webgl') ;
+    initShaders(gl, vs, fs) ;
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0)
+
+    const viewMatrix  = new Matrix4();
+
+    const modelMatrix = new Matrix4() ;
+    const u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements) ;
+    /* x,z 方向的空间坐标极值 */
+    const [minPosX, maxPosX, minPosZ, maxPosZ] = [
+      -0.8, 0.8, -1, 1
+    ]
+
+    /* 波浪对象 */
+    const wave  = new Poly({
+        gl,
+        vertices: crtVertices() ,
+        uniforms: {
+            u_ViewMatrix: {
+                type: 'uniformMatrix4fv',
+                value: viewMatrix.elements,
+            },
+        }
+    })
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    wave.draw()
+    // gl.drawArrays(gl.POINTS, 0, 150)
+    /* 建立顶点集合 */
+function crtVertices(offset =0){
+    const vertices = [] ;
+    for( let z= minPosZ; z< maxPosZ;z +=0.04) {
+        for (let x = minPosX; x < maxPosX; x+=0.04) {
+            vertices.push(x,0,z) ;
+            
+        }
+    }
+    return vertices ;
+
+}
+</script>
+</html>

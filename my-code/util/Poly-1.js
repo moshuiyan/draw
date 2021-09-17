@@ -4,6 +4,7 @@ const  defAttr = () => ({   //默认值   原来是返回一个对象的方法
     geoData: [],   // 对象数组
     size: 2,      //  分量数
     attrName: 'a_Position',
+    uniforms: {},
     count: 0,    // 点数
     types: ['POINTS'],    // 绘图方式
     circleDot:false,    // 是否启用圆点
@@ -22,7 +23,7 @@ export default class Poly {
         const vertexBuffer  = gl.createBuffer();
         // gl.bindBuffer(target, buffer)
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        this.updateBuffer(gl);
+        this.updateBuffer();
         const a_Position = gl.getAttribLocation(gl.program, attrName);
         // gl.vertexAttribPointer(index, size, type, normalized, stride, offset)
         gl.vertexAttribPointer(a_Position, size, gl.FLOAT, false, 0, 0);
@@ -30,6 +31,21 @@ export default class Poly {
         gl.enableVertexAttribArray(a_Position);
         if (circleDot) {
             this.u_IsPOINTS = gl.getUniformLocation(gl.program,'u_IsPOINTS')
+        }
+
+        this.updateUniform() ;
+    }
+    updateUniform() {
+        const { gl, uniforms } = this ;
+        for(let [key,val] of Object.entries(uniforms)){
+ /* type 是表示设置uniform变量的方式,  */
+            const { type, value} = val ;
+            const u = gl.getUniformLocation(gl.program, key) ;
+            if (type.includes('Matrix')){
+                gl[type](u,false,value) ;
+            }else {
+                gl[type](u,false) ;
+            }
         }
     }
 
@@ -77,8 +93,8 @@ export default class Poly {
     draw( types = this.types) {
         const {gl, count,circleDot,u_IsPOINTS} = this ;
         for (const  type of types) {
-        circleDot && gl.uniform1f(u_IsPOINTS, type === 'POINTS')
-            gl.drawArrays(gl[type], 0, count)
+        circleDot && gl.uniform1f(u_IsPOINTS, type === 'POINTS');
+         gl.drawArrays(gl[type], 0, count);
         }
     }
 }

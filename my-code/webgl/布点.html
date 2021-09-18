@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>布点</title>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Position ;
+    uniform mat4 u_ViewMatrix ;
+    uniform mat4 u_ModelMatrix ;
+    void main() {
+        gl_Position =  a_Position ;
+        gl_PointSize = 3.0 ;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragment">
+    void main() {
+        gl_FragColor = vec4(0.5,1.0,1.0,1.0) ;
+    }
+</script>
+<script type="module">
+    import {Matrix4, Vector3, Quaternion,  Plane, Ray} from '../../crystalocean-three.js-master/three.js/build/three.module.js' ;
+    import {initShaders, getMousePosInWebgl, ScaleLinear} from '../util/initShader.js'
+    import Poly from '../util/Poly-1.js' ;
+
+    const canvas = document.getElementById('ca1') ;
+    const vs = document.getElementById('vertex').textContent ;
+    const fs = document.getElementById('fragment').textContent ;
+    canvas.height = window.innerHeight -50 ;
+    canvas.width = window.innerWidth -50 ;
+
+    const gl = canvas.getContext('webgl') ;
+    initShaders(gl, vs, fs) ;
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0)
+    /* x,z 方向的空间坐标极值 */
+    const [minPosX, maxPosX, minPosZ, maxPosZ] = [
+      -0.8, 0.8, -1, 1
+    ]
+
+    const vertices =[ ] ;
+    for (let x = minPosX;  x < maxPosX; x+=0.04) {
+        for (let z = minPosZ; z < maxPosZ; z+=0.05) {
+            vertices.push(x,0,z) ;
+            
+        }
+        
+    }
+
+
+
+
+    const buffer = gl.createBuffer() ;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW );
+
+    const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+        // gl.vertexAttribPointer(index, size, type, normalized, stride, offset)
+    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+        // 赋能批处理
+    gl.enableVertexAttribArray(a_Position);
+
+    const viewMatrix  = new Matrix4();
+
+    const modelMatrix = new Matrix4() ;
+    const u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements) ;
+// 最后一个参数是顶点数
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT) ;
+    gl.drawArrays(gl.POINTS, 0, vertices.length/3) ;
+    </script>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>变色</title>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<!-- 为啥要在这里声明颜色变量
+通过 varay将其全局化 glsl里全局 -->
+<script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Position ;
+    uniform mat4 u_ViewMatrix ;
+    uniform mat4 u_ModelMatrix ;
+    attribute vec4 a_Color;
+    varying vec4 v_Color;
+    void main() {
+        gl_Position =  a_Position ;
+        gl_PointSize = 13.0 ;
+        v_Color = a_Color;
+    }
+</script>
+<!-- 片元这里只能统一修改颜色 -->
+<script type="x-shader/x-fragment" id="fragment">
+    precision mediump float;
+    varying vec4 v_Color;
+    void main() {
+        gl_FragColor = v_Color;
+    }
+</script>
+<!-- 这里的变换矩阵之所以是四维，是为了引入齐次坐标，齐次坐标指的是
+能用矩阵来表示的变换（线性），平移变换无法用同阶矩阵来表示
+ 对于点来说最后一位就是个系数 如果不为1 那么它所代表的
+点位坐标实际上是在低维坐标系其余坐标除以它，同一个坐标系中 这个系数必然相同，
+因为对于向量来说这一位就是0，比如(1,1,1,1) 表示三维坐标点（1，1,1）
+（1,1,1,2）表示三维坐标点（1/2,1/2,1/2） -->
+<script type="module">
+    import {Matrix4, Vector3, Quaternion,  Plane, Ray} from '../../crystalocean-three.js-master/three.js/build/three.module.js' ;
+    import {initShaders, getMousePosInWebgl, ScaleLinear} from '../util/initShader.js'
+    import Poly from '../util/Poly-1.js' ;
+
+    const canvas = document.getElementById('ca1') ;
+    const vs = document.getElementById('vertex').textContent ;
+    const fs = document.getElementById('fragment').textContent ;
+    canvas.height = window.innerHeight -50 ;
+    canvas.width = window.innerWidth -50 ;
+
+    const gl = canvas.getContext('webgl') ;
+    initShaders(gl, vs, fs) ;
+
+    const vertices = new Float32Array(
+        [
+        0, 0.2,
+      -0.2, -0.1,
+      0.2, -0.1,
+      0.4, 0.2
+        ]
+    )
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+    // void gl.vertexAttribPointer(index, size, type, normalized, stride, offset);
+   /* 告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据 */
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0,0)
+
+    gl.enableVertexAttribArray(a_Position);
+
+    /*  */
+    const colors = new Float32Array([
+      0, 0, 1, 1,
+      0, 1, 0, 1,
+      1, 1, 0, 1
+    ]);
+    const ColorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, ColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+    const a_Color  = gl.getAttribLocation(gl.program, 'a_Color');
+
+    gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, false, 0, 0);
+
+
+    gl.enableVertexAttribArray(a_Color);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, 3);
+</script>
+</html>

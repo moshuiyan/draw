@@ -24,6 +24,12 @@
         gl_FragColor = vec4(1.5,1.0,1.0,1.0) ;
     }
 </script>
+<!-- 这里的变换矩阵之所以是四维，是为了引入齐次坐标，齐次坐标指的是
+能用矩阵来表示的变换（线性），平移变换无法用同阶矩阵来表示
+ 对于点来说最后一位就是个系数 如果不为1 那么它所代表的
+点位坐标实际上是在低维坐标系其余坐标除以它，同一个坐标系中 这个系数必然相同，
+因为对于向量来说这一位就是0，比如(1,1,1,1) 表示三维坐标点（1，1,1）
+（1,1,1,2）表示三维坐标点（1/2,1/2,1/2） -->
 <script type="module">
     import {Matrix4, Vector3, Quaternion,  Plane, Ray} from '../../crystalocean-three.js-master/three.js/build/three.module.js' ;
     import {initShaders, getMousePosInWebgl, ScaleLinear} from '../util/initShader.js'
@@ -42,7 +48,11 @@
 
     const viewMatrix  = new Matrix4();
 
-    const modelMatrix = new Matrix4() ;
+    const modelMatrix = new Matrix4().lookAt(
+        new Vector3(0.2,0.3,1),
+        new Vector3(0,0,0),
+        new Vector3(0,1,0),
+    ) ;
     const u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
     gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements) ;
     /* x,z 方向的空间坐标极值 */
@@ -50,9 +60,44 @@
       -0.8, 0.8, -1, 1
     ]
 
-    /* 波浪对象 */
+    /* x,z方向的弧度极值 */
+    const [minAngX,maxAngX, minAngZ,maxAngZ] =[
+        0,Math.PI*4, 0,Math.PI * 2   
+    ]
+    /*比例尺 空间坐标和弧度相映射，这样x轴的单位就可以是相应的弧度 */
+    const scalerX = ScaleLinear(
+        minPosX, minAngX,
+        maxPosX, maxAngX,
+    )
+    const scalerZ = ScaleLinear(
+        minPosZ, minAngZ,
+        maxPosZ, maxAngZ,
+    )
+    function sinFin(a=1,omega=1,phi=0){
+        return function(x) {
+            return a * Math.sin(omega* x + phi)
+        }
+    }
+
+    function updateVertivces(offset = 0) {
+        const {vertices} = wave ;
+        for (let i= 0;i < vertices.length;i+=3){
+            const [posX,posZ] = [vertices[i], vertices[i+2]];
+            const angZ = scalerZ(posZ);
+            const angX = scalerX(posX) ;
+            const omega = 2;
+            const a = 0.03 ; // 决定了振幅
+            const phi = scalerX(posX) + offset ;// 初相，变量为0时的角度  
+        
+            vertices[i + 1] = sinFin(a,omega,phi)(angZ) ;
+        }
+    }
+
+    /* 波浪对象 例子里应该是把默认值改成3了 */
     const wave  = new Poly({
         gl,
+        size:3,
+        types: ['PONITS','LINES'] ,
         vertices: crtVertices() ,
         uniforms: {
             u_ViewMatrix: {
@@ -61,13 +106,25 @@
             },
         }
     })
+    updateVertivces();
+    wave.updateBuffer() ;
     gl.clear(gl.COLOR_BUFFER_BIT);
     wave.draw()
+
+    let ang=0;  // 函数声明前面一定要分号 立即执行的小括号也是
+   (function blow(){
+       ang+=0.1
+     updateVertivces(ang);
+     wave.updateBuffer() ;
+     gl.clear(gl.COLOR_BUFFER_BIT);
+     wave.draw();
+     requestAnimationFrame(blow)   
+    })
     // gl.drawArrays(gl.POINTS, 0, 150)
     /* 建立顶点集合 */
 function crtVertices(offset =0){
     const vertices = [] ;
-    for( let z= minPosZ; z< maxPosZ;z +=0.04) {
+    for( let z= minPosZ; z< maxPosZ;z +=0.05) {
         for (let x = minPosX; x < maxPosX; x+=0.04) {
             vertices.push(x,0,z) ;
             

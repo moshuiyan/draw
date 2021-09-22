@@ -109,8 +109,8 @@ export  class Compose {
   }
 /**
  * 在由一维数组建立的栅格矩阵中，基于行列获取元素的索引位置 
- * @param {*} w 
- * @param {*} size 
+ * @param {*} w  系列数
+ * @param {*} size  类目尺寸 一个类目的元素数
  */
   function GetIndexInGrid(w,size) {
     return function (x,y) {

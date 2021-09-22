@@ -39,7 +39,7 @@ export default class Poly {
     init() {
         const {attrName, size, gl, circleDot,attributes,elementBytes, source} = this;
         if(!gl) { return ; }
-/* 启用数据集*/
+        /* 启用数据集*/
         if(source && source.length){
             this.calculateSourceSize()
             this.updateAttribute()

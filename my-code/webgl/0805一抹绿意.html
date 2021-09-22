@@ -116,7 +116,7 @@ const  categorySize = a_Position.size + a_Color.size ;
     const wave = new Poly({
         gl,
         source:getSource(vertices, indexes, categorySize),
-        types:['POINT','LINES', 'TRIANGLES'],
+        types:['POINT','LINES','TRIANGLES' ],
         uniforms: {
             u_ViewMatrix: {
                 type: 'uniformMatrix4fv',
@@ -128,6 +128,9 @@ const  categorySize = a_Position.size + a_Color.size ;
             a_Color
         }
     })
+    /* 开启透明度合成 */
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA,gl.ONE)
     gl.clearColor(0,0,0,1)
     updateVertivces() 
     wave.updateAttribute()

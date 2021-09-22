@@ -107,3 +107,32 @@ export  class Compose {
       return x * k  + b
     }
   }
+/**
+ * 在由一维数组建立的栅格矩阵中，基于行列获取元素的索引位置 
+ * @param {*} w 
+ * @param {*} size 
+ */
+  function GetIndexInGrid(w,size) {
+    return function (x,y) {
+      return (y*w + x) * size
+    }
+  }
+
+
+export {GetIndexInGrid} ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

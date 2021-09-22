@@ -1,10 +1,29 @@
 const  defAttr = () => ({   //默认值   原来是返回一个对象的方法
     gl: null,
-    vertices: [],  // 
+    source: [] ,    // 数据集 行扩展矩阵
+    sourceSize: 0,   // 一行的分量
+    elementBytes: 4,   // 元素字节数 32位 就是4 字节
+    categoryBytes:0,   // 类目字节数 一行元素个数 * 元素字节
+    categorySize: 4,   // 类目尺寸 一行的系列数  
+    vertices: [],  // 原始数据数组
     geoData: [],   // 对象数组
     size: 2,      //  分量数
     attrName: 'a_Position',
     uniforms: {},
+    attributes: {},
+    /* attributes: {
+        a_Position: {
+            index: 0,
+            size: 3
+        }
+    }
+    uniforms : {
+        u_Color: {
+            type: 'uniform1f',修改方法
+            value: 1,  值+
+        }
+    }
+    } */
     count: 0,    // 点数
     types: ['POINTS'],    // 绘图方式
     circleDot:false,    // 是否启用圆点
@@ -18,8 +37,18 @@ export default class Poly {
         this.init()
     }
     init() {
-        const {attrName, size, gl, circleDot} = this;
+        const {attrName, size, gl, circleDot,attributes,elementBytes, source} = this;
         if(!gl) { return ; }
+/* 启用数据集*/
+        if(source && source.length){
+            this.calculateSourceSize()
+            this.updateAttribute()
+            this.updateUniform()
+            return  ;
+        }
+
+
+
         const vertexBuffer  = gl.createBuffer();
         // gl.bindBuffer(target, buffer)
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -49,6 +78,44 @@ export default class Poly {
         }
     }
 
+    updateAttribute() {
+         const { gl,attributes, categoryBytes, source } = this ;
+         const sourceBuffer = gl.createBuffer() 
+         gl.bindBuffer(gl.ARRAY_BUFFER, sourceBuffer) 
+         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(source), gl.STATIC_DRAW)
+
+         for (let  [key, { size, byteIndex} ] of Object.entries(attributes)) {
+            const attr  = gl.getAttribLocation(gl.program, key) 
+            gl.vertexAttribPointer(
+                attr,
+                size,
+                gl.FLOAT,
+                false,
+                categoryBytes,
+                byteIndex
+            )
+            gl.enableVertexAttribArray(attr)
+         }
+    }
+/**
+ * 基于数据集 计算 类目尺寸 类字节数 顶点数
+ */
+    calculateSourceSize() {
+        const { source , attributes, elementBytes} = this ;
+        let categorySize = 0 ;
+        Object.values(attributes).forEach( (prop) => {
+            const { size, index} = prop ;
+            categorySize +=  size ;
+            prop.byteIndex = index * elementBytes  ;
+
+        })
+
+        this.categorySize = categorySize
+        this.categoryBytes = categorySize * elementBytes 
+        this.sourceSize = source.length / categorySize 
+
+
+    }
     addVertice(...params) {
         this.vertices.push(...params);
         this.updateBuffer();
@@ -91,10 +158,15 @@ export default class Poly {
         this.count = (this.vertices.length / this.size ) | 0 ;
     }
     draw( types = this.types) {
-        const {gl, count,circleDot,u_IsPOINTS} = this ;
+        const {gl, count,sourceSize,circleDot,u_IsPOINTS} = this ;
         for (const  type of types) {
         circleDot && gl.uniform1f(u_IsPOINTS, type === 'POINTS');
-         gl.drawArrays(gl[type], 0, count);
+        if(sourceSize >0){
+            gl.drawArrays(gl[type], 0, sourceSize)
+        }else if (count > 0){
+
+            gl.drawArrays(gl[type], 0, count);
+        }
         }
     }
 }

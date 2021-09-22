@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="icon" type="image/x-icon" href="https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>变色</title>
 </head>
@@ -52,44 +52,74 @@
     const gl = canvas.getContext('webgl') ;
     initShaders(gl, vs, fs) ;
 
-    const vertices = new Float32Array(
-        [
-        0, 0.2,
-      -0.2, -0.1,
-      0.2, -0.1,
-      0.4, 0.2
-        ]
-    )
+
+
+    /*数据集 类目（行数据，一个类目的每个数据就是一个系列）
+    系列（表头，这里就对应顶点坐标 或 顶点颜色）   */
+    const datasource =  new Float32Array([
+          0 ,  0.4, 0,     0, 0, 1, 1,
+        -0.2, -0.1, 0,     0, 1, 0, 1,
+        0.2,  -0.1, 0,     1, 0, 0, 1,
+        0.4,   0.4, 0,     1, 1, 1, 1
+      
+     
+    ])
+    /* 排错果然要先排除干扰因素啊 */
+    
+    // /* 元素字节数 每个元素的字节数 ? 结果是4 ? 八位无符号位 === 一字节 */
+    const elementBytes = datasource.BYTES_PER_ELEMENT ;
+    console.log(elementBytes,'字节');
+    /* 系列尺寸 分量 */
+    const verticeSize = 3 ;
+    const colorSize = 4 ;
+    /* 类目尺寸 系列尺寸之和*/
+    const categorySize  = verticeSize + colorSize ;
+   /* 类目字节数  */
+    const CategoryBytes = categorySize * elementBytes ;
+   /*系列字节索引位置 一个系列在一个类目中 以字节为单位的索引位置  */
+    const verticeByteIndex = 0 ;
+    const colorByteIndex = verticeSize* elementBytes ;
+   /*  */
+    const sourceSize = datasource.length / categorySize ;
+
+
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, datasource, gl.STATIC_DRAW);
 
     const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
     // void gl.vertexAttribPointer(index, size, type, normalized, stride, offset);
-   /* 告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据 */
-    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0,0)
+   /* 告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据的方式 */
+  /* index gl变量索引 ，size 分量，
+  * type  元素类型 float为32位标准浮点数
+   *normalized 是否归一化 当转换为浮点数时是否应该将整数数值归一化到特定的范围。 只有非浮点数才有效
+   *stride 以字节为单位指定连续顶点属性开始之间的偏移量(即数组中一行长度)  类目字节数 
+   * offset 指定顶点属性数组中第一部分的字节偏移量  系列索引位置
+   */
+    gl.vertexAttribPointer(a_Position, 
+    verticeSize,
+     gl.FLOAT,
+     false,
+    CategoryBytes,
+    verticeByteIndex)
 
     gl.enableVertexAttribArray(a_Position);
 
-    /*  */
-    const colors = new Float32Array([
-      0, 0, 1, 1,
-      0, 1, 0, 1,
-      1, 0, 0, 1
-    ]);
-    const ColorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, ColorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
     const a_Color  = gl.getAttribLocation(gl.program, 'a_Color');
 
-    gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(
+        a_Color, 
+    colorSize, 
+    gl.FLOAT, false,
+    CategoryBytes,
+     colorByteIndex);
 
 
     gl.enableVertexAttribArray(a_Color);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.POINTS, 0, 3);
-    gl.drawArrays(gl.LINE_STRIP, 0, 3)
-    gl.drawArrays(gl.TRIANGLE_FAN, 0,3)
+    // gl.drawArrays(gl.POINTS, 0, 4);
+    gl.drawArrays(gl.LINE_STRIP, 0, 4)
+    gl.drawArrays(gl.TRIANGLE_FAN, 0,4)
 </script>
 </html>

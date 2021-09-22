@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>变色</title>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<!-- 为啥要在这里声明颜色变量
+通过 varay将其全局化 glsl里全局 -->
+<script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Position ;
+    uniform mat4 u_ViewMatrix ;
+    uniform mat4 u_ModelMatrix ;
+    attribute vec4 a_Color;
+    varying vec4 v_Color;
+    void main() {
+        gl_Position =  u_ViewMatrix * a_Position ;
+        gl_PointSize = 3.0 ;
+        v_Color = a_Color;
+    }
+</script>
+<!-- 片元这里只能统一修改颜色 -->
+<script type="x-shader/x-fragment" id="fragment">
+    precision mediump float;
+    varying vec4 v_Color;
+    void main() {
+        gl_FragColor = v_Color;
+    }
+</script>
+<!-- 这里的变换矩阵之所以是四维，是为了引入齐次坐标，齐次坐标指的是
+能用矩阵来表示的变换（线性），平移变换无法用同阶矩阵来表示
+ 对于点来说最后一位就是个系数 如果不为1 那么它所代表的
+点位坐标实际上是在低维坐标系其余坐标除以它，同一个坐标系中 这个系数必然相同，
+因为对于向量来说这一位就是0，比如(1,1,1,1) 表示三维坐标点（1，1,1）
+（1,1,1,2）表示三维坐标点（1/2,1/2,1/2） -->
+<script type="module">
+    import {Matrix4, Vector3,Color, Quaternion,  Plane, Ray} from '../../crystalocean-three.js-master/three.js/build/three.module.js' ;
+    import {initShaders,GetIndexInGrid, getMousePosInWebgl, ScaleLinear} from '../util/initShader.js'
+    import Poly from '../util/Poly-1.js' ;
+
+    const canvas = document.getElementById('ca1') ;
+    const vs = document.getElementById('vertex').textContent ;
+    const fs = document.getElementById('fragment').textContent ;
+    canvas.height = window.innerHeight -50 ;
+    canvas.width = window.innerWidth -50 ;
+
+    const gl = canvas.getContext('webgl') ;
+    initShaders(gl, vs, fs) ;
+
+    /* 视图矩阵 */
+    const viewMatrix = new Matrix4().lookAt(
+        new Vector3(0.2, 0.3, 1.0),
+        new Vector3( ),
+        new Vector3(0,1,0)
+    )
+
+   /* x,z 方向的空间坐标极值 */
+   const [minPosX, maxPosX, minPosZ, maxPosZ] = [
+      -0.8, 0.8, -1, 1
+    ]
+  /* x,z方向的弧度极值 */
+  const [minAngX,maxAngX, minAngZ,maxAngZ] =[
+        0,Math.PI*4, 0,Math.PI * 2   
+    ]
+    /*比例尺 空间坐标和弧度相映射，这样x轴的单位就可以是相应的弧度 */
+    const scalerX = ScaleLinear(
+        minPosX, minAngX,
+        maxPosX, maxAngX,
+    )
+    const scalerZ = ScaleLinear(
+        minPosZ, minAngZ,
+        maxPosZ, maxAngZ,
+    )
+    const [a1,a2] = [0.1, 0.03] 
+    const a12 =  a1 + a2 
+    const [minY, maxY] = [ -a12, a12]
+
+
+    function sinFin(a=1,omega=1,phi=0){
+        return function(x) {
+            return a * Math.sin(omega* x + phi)
+        }
+    }
+   
+
+const [minH,maxH] = [0.1, 0.55]
+const scalerC = ScaleLinear(minY,minH, maxY,maxH)
+/*颜色对象 通过HSL获取颜色  */
+const color = new Color()
+
+/* 波浪对象的行列数 */
+const [rows, cols] = [50,50]
+/*  点位和  颜色 attribute变量 */
+const a_Position = { size: 3, index: 0};
+const a_Color = { size: 4, index: 3};
+
+
+const  categorySize = a_Position.size + a_Color.size ;
+
+
+    /* 获取基础数据
+       vertices 按照行列形式排列的顶点集合
+       indexes 三角网格的顶点索引，其元素为顶点在vertices中的索引
+    */
+   const getInd = GetIndexInGrid(cols, categorySize);
+    const { vertices, indexes } = crtBaseData(
+        cols, rows, minPosX,minPosZ,maxPosX,maxPosZ
+    );
+
+
+    const wave = new Poly({
+        gl,
+        source:getSource(vertices, indexes, categorySize),
+        types:['POINT','LINES', 'TRIANGLES'],
+        uniforms: {
+            u_ViewMatrix: {
+                type: 'uniformMatrix4fv',
+                value: viewMatrix.elements
+            }
+        },
+        attributes: {
+            a_Position,
+            a_Color
+        }
+    })
+    gl.clearColor(0,0,0,1)
+    updateVertivces() 
+    wave.updateAttribute()
+    render()
+    let offset = 1 
+    ;(function ani(){
+        offset+=0.08
+        updateVertivces(offset) 
+        wave.updateAttribute()
+        render()
+        requestAnimationFrame(ani)
+    })()
+
+    function render() {
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        wave.draw()
+    }
+
+
+function crtBaseData(cols, rows, minPosX,minPosZ,maxPosX,maxPosZ) {
+    const vertices  =[] , indexes = []
+    const  spaceZ = (maxPosZ - minPosZ) / rows 
+    const  spaceX = (maxPosX - minPosX) / cols
+    for (let z = 0;  z < rows; z++) {
+        for (let x =0; x < cols;x++) {
+            const pz= z * spaceZ + minPosZ
+            const px= x * spaceX + minPosX
+            vertices.push(px, 0,pz,1,1,1,1)
+            if (z && x) {
+                const [x0, z0] = [x - 1, z - 1]
+            indexes.push(
+              getInd(x0, z0),
+              getInd(x, z0),
+              getInd(x, z),
+              getInd(x0, z0),
+              getInd(x, z),
+              getInd(x0, z),
+            )
+            }
+        }
+    }
+    return {vertices, indexes}
+}
+    /* 建立顶点集合 */
+    function getSource(vertices, indexes, categorySize) {
+      const arr = []
+      indexes.forEach(i => {
+        arr.push(...vertices.slice(i, i + categorySize))
+      })
+      return arr
+    }
+
+    function updateVertivces(offset = 0) {
+        const {source, categorySize} = wave ;
+        for (let i= 0;i < source.length;i+=categorySize){
+            const [posX,posZ] = [source[i], source[i+2]];
+            const angZ = scalerZ(posZ);
+            const omega = 2;
+            const a = Math.sin(posZ)* a1 + a2 ; // 决定了振幅
+            const phi = scalerX(posX) + offset ;// 初相，变量为0时的角度  
+            const y = sinFin(a,omega, phi)(angZ)
+            source[i + 1] = y ;
+            
+            const h =scalerC(y)
+            const { r,g,b} = color.setHSL(h,1,0.4)
+            source[i + 3] = r
+            source[i + 4] = g
+            source[i + 5] = b
+       }
+    }
+
+</script>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纹理</title>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<script type="x-shader/x-vertex" id = "vertex">
+    attribute vec4 a_Position ;
+    attribute vec2 a_Pin ;
+    varying vec2 v_Pin;
+    void main() {
+        gl_Position = a_Position ;
+        gl_PointSize = 10.0;
+        v_Pin = a_Pin ;
+    }
+
+</script>
+<!-- sampler2D 是二维取样器 类型 -->
+<script type="x-shader/x-fragment" id="fragment">
+    precision mediump float ;
+    uniform sampler2D u_Sampler;
+    varying vec2 v_Pin ;
+    void main() {
+        gl_FragColor = texture2D(u_Sampler, v_Pin);
+        
+    }
+
+</script>
+
+<script type="module">
+ import{ initShaders,ScaleLinear } from '../util/initShader.js';
+
+    const canvas = document.getElementById('ca1');
+    canvas.height = window.innerHeight-50 ;
+    canvas.width = window.innerWidth-50  ;
+
+    const gl = canvas.getContext('webgl') ;
+   const vs = document.getElementById('vertex').textContent ;
+    const fs = document.getElementById('fragment').textContent ;
+initShaders(gl,vs,fs)
+gl.clearColor(0.0, 0.0, 0.0, 1.0)
+gl.clear(gl.COLOR_BUFFER_BIT);
+
+//数据源
+const source = new Float32Array([
+      -0.5, 0.5, 0, 1,
+      -0.5, -0.5, 0, 0.0,
+      0.5, 0.5, 1.0, 1,
+      0.5, -0.5, 1.0, 0.0,
+    ]);
+    const FSIZE = source.BYTES_PER_ELEMENT;
+    //元素字节数
+    const elementBytes = source.BYTES_PER_ELEMENT
+    //系列尺寸
+    const posSize = 2
+    const pinSize = 2
+    //类目尺寸
+    const categorySize = posSize + pinSize
+    //类目字节数
+    const categoryBytes = categorySize * elementBytes
+    //系列字节索引位置
+    const posByteIndex = 0
+    const pinByteIndex = posSize * elementBytes
+    //顶点总数
+    const sourceSize = source.length / categorySize;
+
+    const sourceBuffer = gl.createBuffer()
+   gl.bindBuffer(gl.ARRAY_BUFFER, sourceBuffer)
+   gl.bufferData(gl.ARRAY_BUFFER, source, gl.STATIC_DRAW)
+
+    const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+    gl.vertexAttribPointer(a_Position, posSize, gl.FLOAT,false, categoryBytes, posByteIndex)
+    gl.enableVertexAttribArray(a_Position) 
+ /* 图钉位置 */
+    const a_Pin = gl.getAttribLocation(gl.program, 'a_Pin')
+    gl.vertexAttribPointer(
+        a_Pin,
+        pinSize,
+        gl.FLOAT,
+        false,
+        categoryBytes,
+        pinByteIndex
+    )
+
+    gl.enableVertexAttribArray(a_Pin)
+
+
+      /** 图像预处理  pname 处理方式  params 处理参数 
+        * UNPACK_ALIGNMENT 从内存中解压像素数据 Unpacking of pixel data from memory.
+        * UNPACK_FLIP_Y_WEBGL 如果为true，则把图片上下对称翻转坐标轴(图片本身不变)。
+        *True flips the image symmetrically up and down the axis (the image itself remains the same) .
+        */
+         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
+
+/* 准备三个角色 */
+
+// 激活纹理单元   gl.TEXTURE(index)  
+gl.activeTexture(gl.TEXTURE0)
+// 创建纹理对象
+const texture = gl.createTexture()
+// 绑定纹理单元  把纹理对象装进纹理单元
+gl.bindTexture(gl.TEXTURE_2D, texture)
+
+const image = new Image()
+image.src = '../512.jpg'
+image.onload = function (rs) {
+    //指定二维纹理图像  纹理配置
+  console.log(image);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGB,  // 抛弃alpha，读取红色、绿色和蓝色组件
+    gl.RGB,
+    gl.UNSIGNED_BYTE, // gl.RGBA每个通道8字节
+    image
+  )
+/* texParameter[fi] 设置纹理参数*/
+  gl.texParameteri(
+    gl.TEXTURE_2D,   // 二维纹理
+    gl.TEXTURE_MIN_FILTER, // 纹理缩小滤波器
+    gl.LINEAR
+  )
+// 这函数一次只能设置一个参数？
+  /* 非二次图像处理 */
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_S,  // 纹理坐标水平填充 
+    gl.CLAMP_TO_EDGE    // 使用纹理图像边缘值  只有这个属性才能使用非二次图像源
+)
+
+gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_T,  // 纹理坐标竖直填充 
+    gl.CLAMP_TO_EDGE    // 使用纹理图像边缘值  只有这个属性才能使用非二次图像源
+)
+
+  const u_Sampler = gl.getUniformLocation(gl.program, 'u_Sampler')
+  gl.uniform1i(u_Sampler, 0)
+
+  render()
+}
+
+
+
+// 渲染
+function render() {
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, sourceSize);
+}
+
+
+</script>
+</html>

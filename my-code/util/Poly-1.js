@@ -11,6 +11,12 @@ const  defAttr = () => ({   //默认值   原来是返回一个对象的方法
     attrName: 'a_Position',
     uniforms: {},
     attributes: {},
+    maps: {},  //    纹理
+    count: 0,    // 点数
+    types: ['POINTS'],    // 绘图方式
+    circleDot:false,    // 是否启用圆点
+    u_IsPOINTS:null
+});
     /* attributes: {
         a_Position: {
             index: 0,
@@ -23,13 +29,17 @@ const  defAttr = () => ({   //默认值   原来是返回一个对象的方法
             value: 1,  值+
         }
     }
+    maps 数据结构:{
+  u_Sampler:{
+    image,
+    format,
+    wrapS,
+    wrapT,
+    magFilter,
+    minFilter
+  },
+}
     } */
-    count: 0,    // 点数
-    types: ['POINTS'],    // 绘图方式
-    circleDot:false,    // 是否启用圆点
-    u_IsPOINTS:null
-});
-
 export default class Poly {
     constructor(attr) {
         //           target source1 source2
@@ -44,6 +54,8 @@ export default class Poly {
             this.calculateSourceSize()
             this.updateAttribute()
             this.updateUniform()
+            this.updateMaps()
+
             return  ;
         }
 
@@ -64,6 +76,71 @@ export default class Poly {
 
         this.updateUniform() ;
     }
+
+    updateMaps() {
+      const { gl, maps } = this 
+      Object.entries(maps).forEach(([key, val], ind) => {
+        const {
+            format = gl.RGB,
+            image,
+            wrapS,
+            wrapT,
+            magFilter,
+            minFilter 
+        }  =val 
+
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.activeTexture(gl[`TEXTURE${ind}`]);   // 激活指定索引 纹理单元
+
+        const texture = gl.createTexture() ;
+        gl.bindTexture(gl.TEXTURE_2D, texture) ;
+     //  纹理配置
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+             0,
+             format,
+             format,
+             gl.UNSIGNED_BYTE, image);
+//  纹理参数  水平填充
+        wrapS&&gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_WRAP_S,
+            wrapS
+          ) ;
+//  纹理参数  竖直填充
+          wrapT&&gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_WRAP_T,
+            wrapT
+          ) ;
+//  纹理参数  放大滤波器
+    
+          magFilter&&gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MAG_FILTER,
+            magFilter
+          ) ;
+
+          /* 需要分子贴图 则创建 */
+      if (!minFilter || minFilter > 9729) {
+        gl.generateMipmap(gl.TEXTURE_2D)
+      }
+//  纹理参数  缩小滤波器
+
+      minFilter&&gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        minFilter
+      ) ; 
+      const u = gl.getUniformLocation(gl.program, key)
+      gl.uniform1i(u, ind)
+      }) ;
+
+    }
+
+
+
+
     updateUniform() {
         const { gl, uniforms } = this ;
         for(let [key,val] of Object.entries(uniforms)){

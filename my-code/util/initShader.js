@@ -117,9 +117,18 @@ export  class Compose {
       return (y*w + x) * size
     }
   }
+/**
+ * 加载image的封装
+ */
+function imgPromise(img){
+  return new Promise( (res,rej) => {
+    img.onload = function (){
+      res(img)
+    }
+  } );
+}
 
-
-export {GetIndexInGrid} ;
+export {GetIndexInGrid, imgPromise} ;
 
 
 

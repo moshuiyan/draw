@@ -126,7 +126,9 @@ image.onload = function (rs) {
     gl.LINEAR
   )
 // 这函数一次只能设置一个参数？
-  /* 非二次图像处理 */
+  /* 非二次图像处理
+    宽高是2的n次幂 不需要宽高相等
+  */
   gl.texParameteri(
     gl.TEXTURE_2D,
     gl.TEXTURE_WRAP_S,  // 纹理坐标水平填充 

@@ -163,6 +163,8 @@
     gl.bindTexture(gl.TEXTURE_2D, texture)
 
     const image = new Image()
+    // 使用多纹理时最好就是只加载一次图像源，
+    // 然后就是类似雪碧图的手段 这里是通过改变图钉 纹理容器的位置和大小来得到不同纹理的
     image.src = '../1024.png'
     image.onload = function (rs) {
         //指定二维纹理图像  纹理配置

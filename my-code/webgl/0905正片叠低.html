@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像合成</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script id="vertexShader" type="x-shader/x-vertex">
+      attribute vec4 a_Position;
+      attribute vec2 a_Pin;
+      varying vec2 v_Pin;
+      void main(){
+        gl_Position = a_Position;
+        v_Pin=a_Pin;
+      }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+      precision mediump float;
+      uniform sampler2D u_Sampler;
+      varying vec2 v_Pin;
+      void main(){
+        gl_FragColor=texture2D(u_Sampler,v_Pin);
+      }
+    </script> 
+</body>
+
+<script type="module">
+    import { imgPromise, initShaders, } from '../util/initShader.js';
+    import Poly from '../util/Poly-1.js';
+
+    const canvas = document.getElementById('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const gl = canvas.getContext('webgl');
+
+    const vsSource = document.getElementById('vertexShader').innerText;
+    const fsSource = document.getElementById('fragmentShader').innerText;
+    initShaders(gl, vsSource, fsSource);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+    //数据源
+    const source = new Float32Array([
+      -0.4, 0.8, 0, 1,
+      -0.4, -0.8, 0, 0.0,
+      0.4, 0.8, 1.0, 1,
+      0.4, -0.8, 1.0, 0.0,
+    ]);
+
+    const rect = new Poly({
+      gl,
+      source,
+      type: ['TRIANGLE_STRIP',],
+      attributes: {
+        a_Position: {
+          size: 2,
+          index: 0
+        },
+        a_Pin: {
+          size: 2,
+          index: 2
+        },
+      }
+    })
+
+    const originImg = new Image()
+    originImg.src = '../1024.png'
+
+    const pattern = new Image()
+    pattern.src = '../Cu.jpeg'
+
+    Promise.all([
+      imgPromise(originImg),
+      imgPromise(pattern),
+    ]).then(() => {
+      rect.maps = {
+        u_Sampler: { image: originImg },
+        u_Pattern: { image: pattern },
+      }
+      rect.updateMaps()
+      render()
+    })
+
+      //渲染
+      function render() {
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      rect.draw()
+    }
+</script>
+</html>

@@ -20,9 +20,15 @@
     <script id="fragmentShader" type="x-shader/x-fragment">
       precision mediump float;
       uniform sampler2D u_Sampler;
+      uniform sampler2D u_Pattern;
       varying vec2 v_Pin;
+      // 通过采样器找到原始图片和纹理图片的片元后 合成
+      // 分量相乘  （a1*a2, b1*b2, c1*c2）
       void main(){
-        gl_FragColor=texture2D(u_Sampler,v_Pin);
+        vec4 o =texture2D(u_Sampler,v_Pin);
+        vec4 p =texture2D(u_Pattern,v_Pin);
+        //gl_FragColor= o * p;
+        gl_FragColor= p * o;
       }
     </script> 
 </body>
@@ -32,8 +38,8 @@
     import Poly from '../util/Poly-1.js';
 
     const canvas = document.getElementById('canvas');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth -50;
+    canvas.height = window.innerHeight - 50;
     const gl = canvas.getContext('webgl');
 
     const vsSource = document.getElementById('vertexShader').innerText;
@@ -52,7 +58,7 @@
     const rect = new Poly({
       gl,
       source,
-      type: ['TRIANGLE_STRIP',],
+      types: ['TRIANGLE_STRIP',],
       attributes: {
         a_Position: {
           size: 2,

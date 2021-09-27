@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纹理混合</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script id="vertexShader" type="x-shader/x-vertex">
+      attribute vec4 a_Position;
+      attribute vec2 a_Pin;
+      varying vec2 v_Pin;
+      void main(){
+        gl_Position = a_Position;
+        v_Pin=a_Pin;
+      }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+      precision mediump float;
+      uniform sampler2D u_Sampler;
+      uniform sampler2D u_Pattern;
+      varying vec2 v_Pin;
+      uniform float  u_Ratio ;
+      // 通过采样器找到原始图片和纹理图片的片元后 合成
+      // 分量相乘  （a1*a2, b1*b2, c1*c2）
+      // mix(m,n,a) = m +(n-m)* a a从0 到1 即可实现从m到n的过渡
+      void main(){
+        vec4 o =texture2D(u_Sampler,v_Pin);
+        vec4 p =texture2D(u_Pattern,v_Pin);
+        //gl_FragColor= o * p;
+        gl_FragColor= mix(p,o,u_Ratio);
+      }
+    </script> 
+</body>
+
+<script type="module">
+    import { imgPromise, initShaders, } from '../util/initShader.js';
+    import Poly from '../util/Poly-1.js';
+
+    const canvas = document.getElementById('canvas');
+    canvas.width = window.innerWidth -50;
+    canvas.height = window.innerHeight - 50;
+    const gl = canvas.getContext('webgl');
+
+    const vsSource = document.getElementById('vertexShader').innerText;
+    const fsSource = document.getElementById('fragmentShader').innerText;
+    initShaders(gl, vsSource, fsSource);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+    //数据源
+    const source = new Float32Array([
+      -0.4, 0.8, 0, 1,
+      -0.4, -0.8, 0, 0.0,
+      0.4, 0.8, 1.0, 1,
+      0.4, -0.8, 1.0, 0.0,
+    ]);
+
+    const rect = new Poly({
+      gl,
+      source,
+      types: ['TRIANGLE_STRIP',],
+      attributes: {
+        a_Position: {
+          size: 2,
+          index: 0
+        },
+        a_Pin: {
+          size: 2,
+          index: 2
+        },
+      }
+    })
+
+    const originImg = new Image()
+    originImg.src = '../1024.png'
+
+    const pattern = new Image()
+    pattern.src = '../Cu.jpeg'
+
+    const u_ratio = gl.getUniformLocation(gl.program, 'u_Ratio');
+    gl.uniform1f(u_ratio, 0.0) 
+
+    Promise.all([
+      imgPromise(originImg),
+      imgPromise(pattern),
+    ]).then(() => {
+      rect.maps = {
+        u_Sampler: { image: originImg },
+        u_Pattern: { image: pattern },
+      }
+      rect.updateMaps()
+      render()
+      ani();
+    })
+
+      //渲染
+      function render() {
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      rect.draw()
+    }
+    let ratio = 0 ,a = 0.01;
+    /* 报错了因为 纹理是等图片才创建的 */
+    ;function ani() {
+        if (ratio >1) {
+           a = -a
+        }else if (ratio < 0){
+            a =-a 
+        }
+        ratio += a ;
+            gl.uniform1f(u_ratio,ratio)
+            render()
+            requestAnimationFrame(ani)
+        
+    }
+</script>
+</html>

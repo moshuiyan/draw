@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打印</title>
+
+<style>
+    * {
+        margin: 0;
+    }
+</style>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+
+    attribute vec4 a_Position ;
+    void main(){
+       gl_Position = vec4(0.0, 0.0, 0.0, 1.0) ;
+       gl_PointSize = 40.0 ; 
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragment">
+    // 颜色分量1对应 css的255  二的8次 ；
+    void main() {
+        gl_FragColor = vec4(0.1,0.3, 1.0, 1.0);
+    }
+</script>
+
+<script type="module">
+    import {initShaders} from '../../util/initShader.js'
+    const canvas  = document.querySelector('#ca1');
+    const vs  = document.getElementById('vertex').textContent ;
+    const fs  = document.getElementById('fragment').textContent ;
+    // canvas.height = window.innerHeight -10;
+    // canvas.width = window.innerWidth -5 ;
+    const gl = canvas.getContext('webgl'); //此时webgl坐标就建立起来了，也就是说坐标原点 基底确定了，下面再改高宽，不会改变 默认300* 150；
+    initShaders(gl, vs, fs);
+
+
+/* 现在的点位坐标原点被移到了靠近左下角的位置，坐标刻度也不是二分之一高宽了， 但是位置超出1个单位的还会消失 */
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT) ;
+    // gl.vertexAttrib1f(a_Position,-0.1 ) ;
+    gl.drawArrays(gl.POINTS,0,1)
+    const pixel = new Uint8Array(4) ;
+    gl.readPixels(150, 75, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel)
+    console.log(pixel);
+</script>
+</html>

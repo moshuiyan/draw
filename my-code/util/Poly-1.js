@@ -150,7 +150,7 @@ export default class Poly {
             if (type.includes('Matrix')){
                 gl[type](u,false,value) ;
             }else {
-                gl[type](u,false) ;
+                gl[type](u,value) ;
             }
         }
     }

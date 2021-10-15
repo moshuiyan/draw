@@ -2,11 +2,12 @@ export function initShaders(gl, vsSource, fsSource) {
     const program = gl.createProgram();//程序对象
     const vetexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);// 顶点 着色器对象
     const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER,fsSource);// 片元 着色器对象
-    gl.attachShader(program, vetexShader) // 把着色器对象装进程序对象中
-    gl.attachShader(program, fragmentShader) // 把着色器对象装进程序对象中
+    gl.attachShader(program, vetexShader) // 把顶点着色器对象装进程序对象中
+    gl.attachShader(program, fragmentShader) // 把片元着色器对象装进程序对象中
     gl.linkProgram(program) // 连接webgl上下文对象和程序对象
     gl.useProgram(program);// 启动程序
     gl.program = program;//将程序对象挂到gl上下文
+    return true  // 少了这一行会怎么样
 } 
 
 function loadShader(gl, type, source){

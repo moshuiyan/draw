@@ -1,80 +1,151 @@
-const  defAttr = () => ({   //默认值   原来是返回一个对象的方法
-    gl: null,
-    vertices: [],  // 
-    geoData: [],   // 对象数组
-    size: 2,      //  分量数
-    attrName: 'a_Position',
-    count: 0,    // 点数
-    types: ['POINTS']    // 绘图方式
-});
-
-export default class Poly {
-    // 走 对象数组
-    constructor(attr) {
-        //           target source1 source2
-        Object.assign(this,defAttr(), attr);
-        this.init()
-    }
-    init() {
-        const {attrName, size, gl} = this;
-        if(!gl) { return ; }
-        const vertexBuffer  = gl.createBuffer();
-        // gl.bindBuffer(target, buffer)
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        this.updateBuffer(gl);
-        const a_Position = gl.getAttribLocation(gl.program, attrName);
-        // gl.vertexAttribPointer(index, size, type, normalized, stride, offset)
-        gl.vertexAttribPointer(a_Position, size, gl.FLOAT, false, 0, 0);
-        // 赋能批处理
-        gl.enableVertexAttribArray(a_Position);
-    }
-
-    addVertice(...params) {
-        this.vertices.push(...params);
-        this.updateBuffer();
-
-    }
-    popVertice() {  //这个删除逻辑 就是删除后面size个元素
-        const { vertices, size} = this;
-        const len = vertices.length;
-        vertices.splice(len-size,len);
-        this.updateCount()
-    }
-    setVertice(index, ...params) {  // 这种写法像splice，不过这里增删相抵即为修改
-        const {vertices, size} = this ;
-        const i = size * index ;
-        params.forEach( (el, ind) => {
-            vertices[ind + i] = el ;
-        })
-    }
-    updateVertices(params){ // 要更新的key值,用对象数组来更新原始数组
-        const {geoData} = this ;
-        const vertices = [] ;
-        geoData.forEach(el => {
-            params.forEach( key => {
-               vertices.push(el[key]) ;  
-            })
-        })
-
-        this.vertices = vertices ;
-    }
-
-    updateBuffer() {
-        const {gl, vertices} = this;
-        this.updateCount();
-        // gl.bufferData(target, size, srcData Optional, usage, srcOffset, length Optional)        
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW )        ;
- 
-    }
-
-    updateCount() {
-        this.count = (this.vertices.length / this.size ) | 0 ;
-    }
-    draw( types = this.types) {
-        const {gl, count} = this ;
-        for (const  type of types) {
-            gl.drawArrays(gl[type], 0, count)
-        }
-    }
+/* 
+attributes 数据结构:{
+  a_Position: {
+    size: 3,
+    index:0
+  }
 }
-
+uniforms 数据结构:{
+  u_Color: {
+    type: 'uniform1f',
+    value:1
+  },
+}
+maps 数据结构:{
+  u_Sampler:{
+    image,
+    format,
+    wrapS,
+    wrapT,
+    magFilter,
+    minFilter
+  },
+}
+*/
+const defAttr = () => ({
+    gl:null,
+    type:'POINTS',
+    source:[],
+    sourceSize:0,
+    elementBytes:4,
+    categorySize: 0,
+    attributes: {},
+    uniforms: {},
+    maps: {}
+  })
+  export default class Poly{
+    constructor(attr){
+      Object.assign(this,defAttr(),attr)
+      this.init()
+    }
+    init(){
+      if (!this.gl) { return }
+      this.calculateSize()
+      this.updateAttribute();
+      this.updateUniform();
+      this.updateMaps()
+    }
+    calculateSize() {
+      const {attributes, elementBytes,source } = this
+      let categorySize = 0
+      Object.values(attributes).forEach(ele => {
+        const { size, index } = ele
+        categorySize += size
+        ele.byteIndex=index*elementBytes
+      })
+      this.categorySize = categorySize
+      this.categoryBytes=categorySize*elementBytes
+      this.sourceSize = source.length / categorySize
+    }
+    updateAttribute() {
+      const { gl, attributes, categoryBytes, source } = this
+      const sourceBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, sourceBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(source), gl.STATIC_DRAW)
+      for (let [key, { size, byteIndex }] of Object.entries(attributes)) {
+        const attr = gl.getAttribLocation(gl.program, key)
+        gl.vertexAttribPointer(
+          attr,
+          size,
+          gl.FLOAT,
+          false,
+          categoryBytes,
+          byteIndex
+        )
+        gl.enableVertexAttribArray(attr)
+      }
+    }
+    updateUniform() {
+      const {gl,uniforms}=this
+      for (let [key, val] of Object.entries(uniforms)) {
+        const { type, value } = val
+        const u = gl.getUniformLocation(gl.program, key)
+        if (type.includes('Matrix')) {
+          gl[type](u,false,value)
+        } else {
+          gl[type](u,value)
+        }
+      }
+    }
+    updateMaps() {
+      const { gl, maps } = this
+      Object.entries(maps).forEach(([key, val], ind) => {
+        const {
+          format = gl.RGB,
+          image,
+          wrapS,
+          wrapT,
+          magFilter,
+          minFilter
+        } = val
+  
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
+        gl.activeTexture(gl[`TEXTURE${ind}`])
+        const texture = gl.createTexture()
+        gl.bindTexture(gl.TEXTURE_2D, texture)
+  
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          format,
+          format,
+          gl.UNSIGNED_BYTE,
+          image
+        )
+  
+        wrapS&&gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_WRAP_S,
+          wrapS
+        )
+        wrapT&&gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_WRAP_T,
+          wrapT
+        )
+  
+        magFilter&&gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_MAG_FILTER,
+          magFilter
+        )
+  
+        if (!minFilter || minFilter > 9729) {
+          gl.generateMipmap(gl.TEXTURE_2D)
+        }
+  
+        minFilter&&gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MIN_FILTER,
+            minFilter
+          )
+  
+        const u = gl.getUniformLocation(gl.program, key)
+        gl.uniform1i(u, ind)
+      })
+    }
+    draw(type = this.type) {
+      const { gl, sourceSize } = this
+      gl.drawArrays(gl[type],0,sourceSize);
+    }
+  }

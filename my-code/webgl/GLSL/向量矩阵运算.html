@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" href="../../xiaoxuancai.svg" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运算</title>
+
+    <style>
+        * {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+
+    attribute vec4 a_Position ;
+    void main(){
+       gl_Position = a_Position ;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragment">
+/*GL SL 着色器语言只有两种基本数据类型 bool 和数值 浮点float 整型 int
+用类型函数可把变量转换为对应类型
+bool()
+int()
+float()
+
+声明函数 用返回值的类型作为声明 关键字
+
+声明向量
+vec[n]
+vec3 v3 = vec3(1.0, 0.0, 0.5);   // (1.0, 0.0, 0.5)
+vec2 v2 = vec2(v3);              // (1.0, 0.0) 
+vec4 v4 = vec4(1.0);        	 // (1.0,1.0,1.0,1.0)
+
+向量的访问
+索引类似 数组
+v4[0]
+属性类似对象
+v4.x, v4.y, v4.z, v4.w  // 齐次坐标
+v4.r, v4.g, v4.b, v4.a  // 色值
+v4.s, v4.t, v4.p, v4.q  // 纹理坐标
+vec4 v4 = vec4(1.0,2.0,3.0,4.0); 
+可一次访问多个
+v4.xy //(1.0,2.0)
+v4.yx //(2.0,1.0)
+v4.xw //(1.0,4.0)
+
+上述访问向量的方法皆可赋值修改向量 但类型要相同
+*/
+// 行主序 还是列主序 就是在进行乘法运算时 左边的矩阵按行 还是列划分向量
+/*
+    矩阵 mat2 mat3 mat4 三种类型 都是浮点型 传参可以是整型，但最后会转为浮点型
+    故访问到的数据都会是浮点型 
+    矩阵 + - / * 数字 就是矩阵的每个元素进行相应的运算
+    矩阵 * 向量 矩阵是列主序 向量当做行向量 结果向量
+    向量 * 矩阵 矩阵是列主序 向量当做列向量 结果向量
+     列主序
+    声明mat4(...args)
+    参数数量在大于0时 需大于等于维数
+
+    可以通过索引来访问行列，暂时理解为为二维数组
+    mat4[m][n] , m n如果是变量标识符 需要是const 定义的常量
+    mat4(
+        1,2,3,4,
+        5,6,7,8，
+        1,2,3,4,
+        5,6,7,8
+    )
+    [[1,2,3,4,]，
+    [5,6,7,8]，
+    [1,2,3,4,]，
+    [5,6,7,8]]
+
+*/
+    precision mediump float  ; // 除了浮点数 都有默认精度， 这里设置的是中精度
+    // 颜色分量1对应 css的255  二的8次 ；
+    uniform vec2 u_CanvasSize ;
+    float halfWidth = u_CanvasSize.x /2.0 ;
+    float halfHeight = u_CanvasSize.y /2.0 ;
+    // 为什么矩阵和两个布尔值的声明要放在主函数里
+    /*是因为gl_FragCoord在主函数里才有，所以布尔值要放里面，
+     也恰恰说明渲染片元的时候在不断调用主函数*/
+     mat4 m1 = mat4(
+        100,0,1,225,
+        0,2,100,225,
+        0,0,100,225,
+        0,4,0,225
+    ) ; //不能多最后一个逗号
+     mat4 m = mat4(200) +mat4(
+         0,0,0,200,
+         0,0,0,200,
+         0,0,0,200,
+       100,0,100,0
+     ) ; // 这个结果打印出来矩阵是单位矩阵乘以113，除法结果是23,实际上就是渲染出来的颜色不对
+     void main() {
+
+    
+    /*片元的位置 原点在左下角*/
+        bool xb = gl_FragCoord.x < halfWidth ;
+        bool yb = gl_FragCoord.y < halfHeight ;
+
+        if (yb) {
+            if(xb) {
+                gl_FragColor = m[0]/255.0 ;
+            }else {
+                gl_FragColor = m[3]/255.0 ;
+
+            }
+        }else {
+            
+            if(xb) {
+                gl_FragColor = m[1]/255.0 ;
+            }else {
+               gl_FragColor = m[2]/255.0 ;
+
+            }
+        }
+    }
+</script>
+
+<script type="module">
+    import { initShaders } from '../../util/initShader.js';
+    import Poly from '../../util/Poly-1.js';
+    const canvas = document.querySelector('#ca1');
+    const vs = document.getElementById('vertex').textContent;
+    const fs = document.getElementById('fragment').textContent;
+    canvas.height = window.innerHeight - 10;
+    canvas.width = window.innerWidth - 5;
+    const gl = canvas.getContext('webgl'); //此时webgl坐标就建立起来了，也就是说坐标原点 基底确定了，下面再改高宽，不会改变 默认300* 150；
+    initShaders(gl, vs, fs);
+    /* 基于片元位置 和 画布宽高 绘制 取点 */
+    /* 我现在的问题是在着色器里写 的颜色值会有偏差  */
+    const points = [
+        -1, 1,
+        1, 1,
+        -1, -1,
+        1, -1
+    ]
+    const square = new Poly({
+        gl,
+        types: ['TRIANGLE_STRIP'],
+        vertices: new Float32Array(points),
+        attrName: 'a_Position',
+        size: 2,
+        uniforms: {
+            u_CanvasSize: {
+                type: 'uniform2fv',
+                value: [canvas.width, canvas.height]
+            }
+        }
+
+
+    })
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // gl.vertexAttrib1f(a_Position,-0.1 ) ;
+    square.draw();
+    function logPixel(x, y) {
+        const pixel = new Uint8Array(4);
+
+        gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel)
+        console.log(pixel, x, y);
+    }
+
+    logPixel(canvas.width / 4.0, canvas.height / 1.5)
+    logPixel(canvas.width / 4.0, canvas.height / 4.0)
+    logPixel(canvas.width / 1.5, canvas.height / 1.5)
+    logPixel(canvas.width / 1.5, canvas.height / 4.0);
+</script>
+
+</html>

@@ -13,6 +13,7 @@
 </style>
 </head>
 <body>
+    <!-- https://github.com/wshxbqq/GLSL-Card  GLSL中文手册-->
     <canvas id="ca1"></canvas>
 </body>
 <script type="x-shader/x-vertex" id="vertex">
@@ -20,13 +21,21 @@
     attribute vec4 a_Position ;
     void main(){
        gl_Position = vec4(0.0, 0.0, 0.0, 1.0) ;
-       gl_PointSize = 40.0 ; 
+       gl_PointSize = 400.0 ; 
     }
 </script>
 <script type="x-shader/x-fragment" id="fragment">
     // 颜色分量1对应 css的255  二的8次 ；
+    precision mediump float ;
+    vec4 color1 = vec4(100,2,3,4) + vec4(5,6,7,8) ;
     void main() {
-        gl_FragColor = vec4(0.1,0.3, 1.0, 1.0);
+        float dist =  distance(gl_PointCoord , vec2(0.5, 0.5)) ;
+        if (dist < 0.5){
+
+            gl_FragColor = color1/ 225.0;
+        }else {
+            gl_FragColor = vec4(0.4, 0.2, 1,1);
+        }
     }
 </script>
 
@@ -34,9 +43,9 @@
     import {initShaders} from '../../util/initShader.js'
     const canvas  = document.querySelector('#ca1');
     const vs  = document.getElementById('vertex').textContent ;
-    const fs  = document.getElementById('fragment').textContent ;
-    // canvas.height = window.innerHeight -10;
-    // canvas.width = window.innerWidth -5 ;
+    const fs  = document.getElementById('fragment').innerText ;
+    canvas.height = window.innerHeight -10;
+    canvas.width = window.innerWidth -5 ;
     const gl = canvas.getContext('webgl'); //此时webgl坐标就建立起来了，也就是说坐标原点 基底确定了，下面再改高宽，不会改变 默认300* 150；
     initShaders(gl, vs, fs);
 

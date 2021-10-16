@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>radial transition</title>
+    <style>
+        canvas,body {
+            margin:0;
+            overflow: hidden;
+        }
+        
+    </style>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script id="vertex" type="x-shader/x-vertex">
+    attribute vec4  a_Position ;
+    void main() {
+        gl_Position = a_Position ;
+    }
+</script>
+
+<script id="fragment" type="x-shader/x-fragment">
+    precision  mediump float;
+    uniform vec4 a_Color  ;
+    uniform vec2 u_CanvasSize ;
+    float jieju(vec2 xy, float k , float b) {
+        return  xy.x - xy.y * k  + b;
+    }
+    float r_radial (vec2 to, vec2 from) {
+        return distance(to, from);
+    }
+    void main() {
+        /*片元的位置 原点在左下角 值域就是px*/
+        /*线性渐变就是在某个方向上变化 ，那么垂直于这个方向上的颜色应该就是一致的*/
+        /*径向渐变就是基于某个点 ，到这个点距离相同的的颜色应该就是一致的*/
+        // 同一直线 截距不变 
+        float jieju_line = jieju(vec2(gl_FragCoord) , 1.0, 100.0) / u_CanvasSize.x  + 0.5;
+        float r_distance = r_radial(vec2(gl_FragCoord) , vec2(u_CanvasSize.x /2.0, u_CanvasSize.y / 2.0)) / u_CanvasSize.x  ;
+        float k_line = 10.0 ;
+        float distance_y = gl_FragCoord.x - gl_FragCoord.y * k_line  ;
+        float color_Line =  (distance_y + u_CanvasSize.x /2.0 ) /u_CanvasSize.x ;
+        float redColor =   gl_FragCoord.x /  u_CanvasSize.x ;
+        float greenColor = gl_FragCoord.y /u_CanvasSize.y ;
+        gl_FragColor = vec4( r_distance,r_distance ,0.8 ,1.0) ;
+    }
+</script>
+
+<script type="module">
+    import {initShaders} from '../../util/initShader.js';
+    import {saveCanvasAsImg} from '../../util/util.js'
+    import Poly from '../../util/Poly-1.js';
+    
+    const canvas =  document.getElementById('3d' ) ;
+    const vs = document.getElementById('vertex').textContent; 
+    const fs = document.getElementById('fragment').textContent; 
+    canvas.height  = window.innerHeight;
+    canvas.width  = window.innerWidth;
+    const gl = canvas.getContext('webgl') ;
+    
+    const source = new Float32Array(
+        [ 
+            1,-1,
+            -1, -1,
+            1,1 ,
+            -1,1
+        ]
+    )
+    initShaders(gl, vs, fs) ;
+
+    const rect = new Poly({
+        gl,
+        source,
+        types:['TRIANGLE_STRIP',],
+        
+    attributes: {
+        a_Position: {
+            size: 2,
+            index: 0
+        }
+    },
+    uniforms: {
+        u_CanvasSize: {
+            type: 'uniform2fv',
+            value: [canvas.width, canvas.height]
+        },
+        a_Color: {
+            type: 'uniform4fv',
+            value: [1,0,1,1]
+        }
+    }
+    })
+
+    rect.draw();
+    
+    
+</script>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="12"></canvas>
+</body>
+<!-- 顶点着色器 -->
+<script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    attribute float a_PointSize;
+    void main(){
+        //点位
+        gl_Position = a_Position;
+        //尺寸
+        gl_PointSize = 100.0;
+    }
+</script>
+
+<!-- 片元着色器  这里的分号要打才行 -->
+<script id="fragmentShader" type="x-shader/x-fragment" >
+  precision mediump float ;
+  vec4 v=  vec4(1,2,3,4) + vec4(5,6,7,8) ;
+  vec4 m3 =   vec4(0,255,0,255);
+  mat4 m = mat4(
+    255,0,0,255,
+    255,255,0,255,
+    m3,
+    0,0,255,255
+  );
+  /* 通过下标可以访问矩阵的一行
+  在矩阵中可直接放入向量，这里要看做js中的扩展运算符即可，
+  但不能直接把vec()放在里面 
+  */
+  uniform vec4 u_FragColor;
+    void main(){
+        float dist = distance(gl_PointCoord, vec2(0.5,0.5));
+        if ( dist > 0.0 &&dist < 0.125){
+            gl_FragColor = m[0] / 225.0 ;
+        }else if (dist < 0.25 && dist >= 0.125) {
+            gl_FragColor = m[1] / 225.0;
+        }else if(dist>=0.25&&dist<0.375){
+            gl_FragColor=m[2]/255.0;
+        }else if(dist>=0.375&&dist<0.5){
+          gl_FragColor=m[3]/255.0;
+        }else{
+          gl_FragColor = v/255.0 ;
+            //discard;
+        }
+        
+  
+    }
+</script>
+
+<script type="module">
+      import {initShaders} from '../util/initShader.js'
+ 
+    let canvas = document.getElementById('12');
+    canvas.height = window.innerHeight /2;
+    canvas.width = window.innerWidth / 2;
+
+    const gl = canvas.getContext('webgl')
+    const veSource = document.querySelector('#vertexShader').textContent;
+    const frSource = document.querySelector('#fragmentShader').textContent;
+
+    initShaders(gl, veSource, frSource);
+
+    gl.clearColor(0,0,0,1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    const a_Position =  gl.getAttribLocation(gl.program, 'a_Position');
+    const u_FragColor =  gl.getUniformLocation(gl.program, 'u_FragColor');
+    gl.vertexAttrib3f(a_Position, 0.0, 0.0 , 0.0 );
+    gl.uniform4f(u_FragColor, 1.0, 0.0 , 0.0, 1.0 );
+    gl.drawArrays(gl.POINTS, 0, 1);
+    const pixel = new Uint8Array(4);
+    // 需要把gl转 canvas 2d坐标
+    //          x, y , width  , height , 
+    const vw = 50 /4 ; //圆环宽度  
+    gl.readPixels(canvas.width /2 + 12, canvas.height /2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel );
+    console.log(pixel);
+    for (let i =0; i< 5; i++){
+        logPixel(vw * i * 0.7 + 2)
+    }
+    function logPixel (offset = 0){
+        // 像素容器 最大值255 8位足矣
+        const pixel = new Uint8Array(4) ;
+        
+        gl.readPixels(canvas.width /2 + offset, canvas.height /2 + offset, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel )
+        console.log(offset, pixel);
+    }
+</script>
+</html>

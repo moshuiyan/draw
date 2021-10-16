@@ -1,0 +1,82 @@
+ precision  mediump float;
+    uniform vec4 a_Color  ;
+    uniform vec2 u_CanvasSize ;
+    float jieju(vec2 xy, float k , float b) {
+        return  xy.x - xy.y * k  + b;
+    }
+
+    struct colorNode {
+        vec4 color ;
+    };
+
+    const   vec2 u_Start = vec2 (100.0, 100.0) ;
+    const  vec2 u_End = vec2 (800.0, 800.0) ;
+
+    vec4 colors[3] ;
+    float  points[3] ;
+// 定义变量不要用其他的变量来初始化
+    const   vec2 se = u_End - u_Start ;  // 渐变方向向量
+    float seLen  = length(se); // 向量的模
+
+    vec2 se1  = normalize(se) ;// 单位向量化
+
+  
+    vec4 getColor( vec4 colors[3], float ratios[3]) {
+        vec4 color  = vec4(1) ;// 片元颜色
+
+        vec2 sf  = vec2(gl_FragCoord) - u_Start ; // 当前片元减起始 ob - oa ab 结果就是起始指向当前
+        // 当前片元在se上的投影长度   dot 向量积 点乘 
+        // 好像只要用点积除以另一向量的模就可以了 dot(vec2(gl_FragCoord), se) / seLen 
+        /* T 为任意 float, vec类型
+        T clamp(T x, T minVal, T maxVal) ;
+        T clamp(T x, float minVal,float maxVal);
+        min(max(x, minVal), maxVal),返回值被限定在 minVal,maxVal之间
+        */
+
+        float fsLen  = clamp(dot(sf,se1), 0.0,seLen) ;
+
+        //长度比
+        float ratio  = clamp(fsLen/seLen , ratios[0], ratios[3-1]) ;
+        // 第一个比值
+        float ratio1 = ratios[0] ;
+        // 第一个颜色 
+        vec4 color1 = colors[0] ;
+
+        // 按比值取色
+        for(int i =1; i< 3; i++) {
+            // 第二个比值 ,颜色
+            float ratio2 = ratios[i] ;
+            vec4 color2 = colors[i] ;
+            if (ratio >= ratio1 && ratio <= ratio2 ) {
+                // 颜色差值
+                vec4 color2_1  = color2 - color1 ;
+                // 当前比值在一段比值中的比值
+                float ratioInRatio = (ratio -ratio1)/(ratio2 - ratio1);
+                // 当前比值在当前色段中对应的色值
+                color  = color1 + color2_1 * ratioInRatio ;
+                break ;
+                
+            }
+
+            ratio1 = ratio2 ;
+            color1 = color2 ;
+        }
+        return color ;
+
+    }
+
+    void main() {
+        /*片元的位置 原点在左下角 值域就是px*/
+        /*线性渐变就是在某个方向上变化 ，那么垂直于这个方向上的颜色应该就是一致的*/
+        // 同一直线 截距不变 
+        float jieju_line = jieju(vec2(gl_FragCoord) , 1.5, 100.0) / u_CanvasSize.x  + 0.5;
+        // gl_FragColor = vec4( jieju_line,0.8 * jieju_line,0.5 *jieju_line,1.0) ;
+
+        colors[0] = vec4(1,0  ,0,1) ;
+        colors[1] = vec4(1 ,1,0,  1) ;
+        colors[2] = vec4(0  ,1 ,0,1) ;
+        points[0] = 0.0 ;
+        points[1] = 0.4 ;
+        points[2] = 1.0 ;
+        gl_FragColor = getColor(colors, points) ;
+    }

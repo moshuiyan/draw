@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="icon" type="image/x-icon" href="https://27592028.s21i.faiusr.com/2/ABUIABACGAAgh9XghwYoovzhngIw0AU4wAc.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="12"></canvas>
+    <canvas id="13"></canvas>
+</body>
+<!-- 顶点着色器 -->
+<script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    attribute float a_PointSize;
+    void main(){
+        //点位
+        gl_Position = a_Position;
+        //尺寸
+        gl_PointSize = 100.0;
+    }
+</script>
+
+<!-- 片元着色器  这里的分号要打才行 -->
+<script id="fragmentShader" type="x-shader/x-fragment" >
+  precision mediump float ;
+  vec4 v=  vec4(1,2,3,4) + vec4(5,6,7,8) ;
+  vec4 m3 =   vec4(0,255,0,255);
+  mat4 m = mat4(
+    255,0,0,255,
+    255,255,0,255,
+    m3,
+    0,0,255,255
+  );
+  /* 通过下标可以访问矩阵的一行
+  在矩阵中可直接放入向量，这里要看做js中的扩展运算符即可，
+  但不能直接把vec()放在里面 
+  */
+  uniform vec4 u_FragColor;
+  uniform vec2 u_CanvasSize ;
+    void main(){
+        float dist = distance(gl_PointCoord, vec2(0.5,0.5));
+        gl_FragColor = vec4(
+            /*gl_FragCoord表示当前片元在canvas坐标（y轴朝上x轴朝右）中像素位置*/
+            1.0 - gl_FragCoord.x /u_CanvasSize.x ,
+            1.0 - gl_FragCoord.y /u_CanvasSize.y ,
+            0.8, 1.0
+        ) ;
+        
+  
+    }
+</script>
+
+<script type="module">
+      import {initShaders} from '../util/initShader.js'
+    import Poly from '../util/Poly-1.js' ;
+    let canvas = document.getElementById('12');
+    canvas.height = window.innerHeight /2;
+    canvas.width = window.innerWidth / 2;
+
+    const gl = canvas.getContext('webgl')
+    const veSource = document.querySelector('#vertexShader').textContent;
+    const frSource = document.querySelector('#fragmentShader').textContent;
+
+    initShaders(gl, veSource, frSource);
+
+    gl.clearColor(0,0,0,1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+
+    const source = new Float32Array([
+      -1, 1,
+      -1, -1,
+      1, 1,
+      1, -1
+    ]);
+
+    const rect = new Poly({
+        gl, 
+        source,
+        types: ['TRIANGLE_STRIP'],
+        attributes: {
+        a_Position: {
+          size: 2,
+          index: 0
+        }
+      },
+      uniforms: {
+        u_CanvasSize: {
+          type: 'uniform2fv',
+          value: [canvas.width, canvas.height]
+        }
+      }
+    })
+
+    rect.draw()
+    // 需要把gl转 canvas 2d坐标
+    //          x, y , width  , height , 
+    const vw = 50 /4 ; //圆环宽度  
+
+    for (let i =0; i< 5; i++){
+        logPixel(vw * i * 0.7 + 2)
+    }
+    function logPixel (offset = 0){
+        // 像素容器 最大值255 8位足矣
+        const pixel = new Uint8Array(4) ;
+        
+        gl.readPixels(canvas.width /2 + offset, canvas.height /2 + offset, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel )
+        console.log(offset, pixel);
+    }
+</script>
+</html>

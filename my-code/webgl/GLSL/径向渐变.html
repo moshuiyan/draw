@@ -46,7 +46,7 @@
         float color_Line =  (distance_y + u_CanvasSize.x /2.0 ) /u_CanvasSize.x ;
         float redColor =   gl_FragCoord.x /  u_CanvasSize.x ;
         float greenColor = gl_FragCoord.y /u_CanvasSize.y ;
-        gl_FragColor = vec4( r_distance,r_distance ,0.8 ,1.0) ;
+        gl_FragColor = vec4( r_distance*0.8,0.5 ,0.8 ,1.0) ;
     }
 </script>
 

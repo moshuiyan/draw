@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空间向量</title>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<script>
+    /* 
+    空间向量同样遵循三角形法则
+    平行四边形法则
+    三个不共面的向量和 等于以他们为邻边的平行六面体的对角线表示的向量
+    如果 向量 a b 不共线 则向量c与a b共面的条件是存在 唯一实数 x，y
+    ax + by = c ;
+    用向量基地来表示一个向量 叫向量的线性表示 组合
+    任意不共面的三个向量可以作基向量
+    通常规定 向量的夹角 <a,b> ∈ [0, π] ;
+    空间向量也有向量积 a·b = |a|*|b|*cos<a,b> 结果是一个实数
+    向量相互垂直 内积为0
+    平行可以用另一向量线性表示
+
+
+
+    直角坐标系中的坐标就是用单位正交基地 来表示一个向量
+    空间直角坐标系Oxyz 表示为 [O;i,j,k] ;
+    用矩阵来表示    将 i j k  又分解为直角坐标系的基地
+    m1[
+    i.x, j.x, k.x , 0 ,
+    i.y, j.y, k.y , 0 ,
+    i.z, j.z, k.z , 0 ,
+    O.x, O.y, O.z , 1 ,
+    ]
+    [O2, i2,j2,k2]
+    坐标系m2[
+    i2.x, j2.x, k2.x , 0 ,
+    i2.y, j2.y, k2.y , 0 ,
+    i2.z, j2.z, k2.z , 0 ,
+    O2.x, O2.y, O2.z , 1 ,
+    ]
+
+    m2坐标系 的点 (x,y,z)
+    要把m2 转为m1 坐标 m1*m2*(x,y)
+    O 是坐标原点 ， i,j,k是坐标向量
+    起点坐标 减终点坐标 就是这个有向线段的向量坐标表示
+
+    */
+</script>
+</html>

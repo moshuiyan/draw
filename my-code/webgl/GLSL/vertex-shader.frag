@@ -1,27 +1,22 @@
  precision  mediump float;
     uniform vec4 a_Color  ;
     uniform vec2 u_CanvasSize ;
-    float jieju(vec2 xy, float k , float b) {
-        return  xy.x - xy.y * k  + b;
-    }
+// 数据 四阶矩阵
+    uniform mat4 u_ColorStops ;
+     uniform  vec2 u_Start ;
+     uniform  vec2 u_End  ;
 
-    struct colorNode {
-        vec4 color ;
-    };
+float pi2  = radians(360.0) ;
 
-    const   vec2 u_Start = vec2 (100.0, 100.0) ;
-    const  vec2 u_End = vec2 (800.0, 800.0) ;
-
-    vec4 colors[3] ;
-    float  points[3] ;
+ 
 // 定义变量不要用其他的变量来初始化
-    const   vec2 se = u_End - u_Start ;  // 渐变方向向量
-    float seLen  = length(se); // 向量的模
+    vec2 se = u_End - u_Start ;  // 渐变方向向量
+    float seLen  = length(se);  // 向量的模
 
     vec2 se1  = normalize(se) ;// 单位向量化
 
-  
-    vec4 getColor( vec4 colors[3], float ratios[3]) {
+  /*  算出当前片元颜色 */
+    vec4 getColor( vec4 colors[8], float ratios[8]) {
         vec4 color  = vec4(1) ;// 片元颜色
 
         vec2 sf  = vec2(gl_FragCoord) - u_Start ; // 当前片元减起始 ob - oa ab 结果就是起始指向当前
@@ -33,17 +28,32 @@
         min(max(x, minVal), maxVal),返回值被限定在 minVal,maxVal之间
         */
 
-        float fsLen  = clamp(dot(sf,se1), 0.0,seLen) ;
+        // float fsLen  = clamp(dot(sf,se1), 0.0,seLen) ;
 
         //长度比
-        float ratio  = clamp(fsLen/seLen , ratios[0], ratios[3-1]) ;
+        // float ratio  = clamp(fsLen/seLen , ratios[0], ratios[8-1]) ;
+
+        // 当前片元到圆心距离
+        float fsLen  = distance(gl_FragCoord.xy, u_Start) ;
+        //  极径比
+        // float  ratio  =clamp(fsLen / seLen, ratios[0], ratios[8-1] );
+
+        // 片元相对于渐变起点的方向
+        float dir = atan(sf.y, sf.x) ;
+
+        if (dir < 0.0) {
+            dir += pi2 ;
+        }
+        //  极角比
+        float ratio = dir / pi2 ;
         // 第一个比值
         float ratio1 = ratios[0] ;
         // 第一个颜色 
         vec4 color1 = colors[0] ;
 
+        float angle  = asin(distance(gl_FragCoord.xy, vec2(0,0)) / gl_FragCoord.x) ;
         // 按比值取色
-        for(int i =1; i< 3; i++) {
+        for(int i =1; i< 8; i++) {
             // 第二个比值 ,颜色
             float ratio2 = ratios[i] ;
             vec4 color2 = colors[i] ;
@@ -64,19 +74,43 @@
         return color ;
 
     }
+    //  out 关键字 有点浅拷贝的意思
+    void setColorStop(int rgb , int ar ,out vec4 color , out float ratio) {
+        // rbg  = 123001131
+        int rc = rgb / 1000000 ; // 123 
+        int gc = (rgb - rc*1000000) /1000 ;
+        int bc = rgb - int(rgb / 1000)* 1000 ;
+        int ac = ar / 1000 ;
+        int ratioI = ar-ac* 1000 ;
+        color = vec4(float(rc),float(gc),float(bc),float(ac) ) / 255.0;
+        ratio = float(ratioI ) / 255.0 ;
+    }
+
+    void setColorStops( out vec4 colors[8], out float ratios[8]) {
+        // 节点颜色 位置数据
+            vec4 colorSource = vec4(1) ;
+            float ratioSource  =1.0 ;
+            //  遍历矩阵
+            for(int y = 0; y < 4; y++) {
+                for (int x =0; x< 2 ; x++) {
+                    int rgb = int (u_ColorStops[y][x*2]) ; // 偶数列
+                    int ar = int(u_ColorStops[y][x*2 +1]);
+                    if (rgb > 0) {
+                        setColorStop(rgb, ar, colorSource, ratioSource) ;
+                    }
+                    colors[y*2+x] = colorSource ;
+                    ratios[y*2+x] = ratioSource ;
+                }
+            }
+    }
 
     void main() {
         /*片元的位置 原点在左下角 值域就是px*/
         /*线性渐变就是在某个方向上变化 ，那么垂直于这个方向上的颜色应该就是一致的*/
         // 同一直线 截距不变 
-        float jieju_line = jieju(vec2(gl_FragCoord) , 1.5, 100.0) / u_CanvasSize.x  + 0.5;
-        // gl_FragColor = vec4( jieju_line,0.8 * jieju_line,0.5 *jieju_line,1.0) ;
+        vec4 colors[8] ;
+        float ratios[8];
 
-        colors[0] = vec4(1,0  ,0,1) ;
-        colors[1] = vec4(1 ,1,0,  1) ;
-        colors[2] = vec4(0  ,1 ,0,1) ;
-        points[0] = 0.0 ;
-        points[1] = 0.4 ;
-        points[2] = 1.0 ;
-        gl_FragColor = getColor(colors, points) ;
+        setColorStops(colors, ratios) ;
+        gl_FragColor = getColor(colors, ratios) ;
     }

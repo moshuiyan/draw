@@ -24,6 +24,13 @@
 <script id="fragment" type="x-shader/x-fragment">
     precision mediump float ;
     uniform vec2 u_CanvasSize ;
+    uniform float u_Spin ;
+    float cosPin = cos(u_Spin) ;
+    float sinPin = sin(u_Spin) ;
+    mat2 rotateM2 = mat2(
+        cosPin, sinPin,
+        -sinPin, cosPin
+    ) ;
     vec2 center  = u_CanvasSize / 2.0;
     float pi2 = radians(360.0);
     float rand (vec2 fragCoord){
@@ -32,12 +39,15 @@
         return fract(sin(n)*10000.0);
     }
 
-
+// 放射也是角度渐变的一种 不过这种是有断层的
     void main() {
         vec2 p = gl_FragCoord.xy - center ;
+// 这里旋转的是片元向量的坐标 相对而言旋转的就是顶点
+        p = rotateM2 * p ;
         // atan 值域 [-π， π]
         float ang = atan(p.y,p.x) ;
         float x = ang* 16.0 ;
+ // 取整造成了断层
         vec2 v = vec2(int(x), 0) ;
 
         float f = rand(v) ;
@@ -81,12 +91,24 @@
                 u_CanvasSize: {
                     type: 'uniform2fv',
                     value: [canvas.width, canvas.height]
-                }
+                },
+                u_Spin: {
+                    type:'uniform1f',
+                    value:0.0 
+                }   
             }
 
 
     })
     gl.clear(gl.COLOR_BUFFER_BIT)
     rect.draw()
+
+    ;(function ani(stamp){
+        rect.uniforms.u_Spin.value = stamp / 1000 ;
+        rect.updateUniform() ;
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        rect.draw() ;
+        requestAnimationFrame(ani)
+    })()
 </script>
 </html>

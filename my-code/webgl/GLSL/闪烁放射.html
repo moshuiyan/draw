@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>放射</title>
+    <style>
+        * {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script id="vertex" type="x-shader/x-vertex">
+    attribute vec4 a_Position ;
+    void main () {
+        gl_Position = a_Position ;
+    }
+</script>
+<!-- 极坐标 -->
+<script id="fragment" type="x-shader/x-fragment">
+    precision mediump float ;
+    uniform vec2 u_CanvasSize ;
+    uniform float u_Spin ;
+    uniform float u_Stamp ;
+    float cosPin = cos(u_Spin) ;
+    float sinPin = sin(u_Spin) ;
+    mat2 rotateM2 = mat2(
+        cosPin, sinPin,
+        -sinPin, cosPin
+    ) ;
+    vec2 center  = u_CanvasSize / 2.0;
+    float pi2 = radians(360.0);
+    float rand (vec2 fragCoord){
+        vec2 a = vec2(0.1234, 0.5678);
+        float n =  dot(fragCoord, a) ;
+        return fract(sin(n)*10000.0);
+    }
+
+// 放射也是角度渐变的一种 不过这种是有断层的
+    void main() {
+        vec2 p = gl_FragCoord.xy - center ;
+// 这里旋转的是片元向量的坐标 相对而言旋转的就是顶点
+      //  p = rotateM2 * p ;
+        // atan 值域 [-π， π]
+        float ang = atan(p.y,p.x) ;
+        float x = ang* 16.0 ;
+ // 取整造成了断层
+        vec2 v = vec2(int(x), int(u_Stamp)) ;
+
+        float f = rand(v) ;
+        gl_FragColor = vec4(f,f,f,1); 
+    }
+</script>
+
+<script type="module">
+    import { initShaders , } from '../../util/initShader.js'
+    import Poly from '../../util/Poly-1.js'
+
+    const canvas = document.getElementById('3d') ;
+    const vs = document.querySelector('#vertex').innerText ;
+    const fs = document.querySelector('#fragment').textContent ;
+    canvas.height = window.innerHeight ;
+    canvas.width = window.innerWidth ;
+    const gl = canvas.getContext('webgl')
+
+    
+    initShaders(gl, vs, fs) ;
+
+    gl.clearColor(0,0,0,1);
+
+    const source = new Float32Array([
+      -1, 1,
+      -1, -1,
+      1, 1,
+      1, -1
+    ]);
+
+    const rect  = new Poly({
+        gl, source,
+        types:['TRIANGLE_STRIP'],
+        attributes: {
+            a_Position :{
+                size: 2 ,
+                index: 0
+            },
+        },
+        uniforms: {
+                u_CanvasSize: {
+                    type: 'uniform2fv',
+                    value: [canvas.width, canvas.height]
+                },
+                u_Spin: {
+                    type:'uniform1f',
+                    value:0.0 
+                },
+                u_Stamp: {
+                    type:'uniform1f',
+                    value:0.0 
+                }    
+            }
+
+
+    })
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    rect.draw()
+
+    let preTime = 0 ;
+    let timelen = 800 ; //时间间隔
+
+    ;(function ani(stamp){
+        rect.uniforms.u_Spin.value = stamp / 1000 ;
+        rect.updateUniform() ;
+        //到了下一帧
+        if(stamp % timelen < preTime % timelen){
+            rect.uniforms.u_Stamp.value = stamp ;
+            
+        }
+        preTime = stamp ;
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        rect.draw() ;
+        requestAnimationFrame(ani)
+    })()
+</script>
+</html>

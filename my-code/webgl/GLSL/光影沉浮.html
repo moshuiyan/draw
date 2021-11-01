@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光暗</title>
+    <style>
+        * {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script id="vertex" type="x-shader/x-vertex">
+    attribute vec4 a_Position ;
+    void main () {
+        gl_Position = a_Position ;
+    }
+</script>
+<!-- 极坐标 -->
+<script id="fragment" type="x-shader/x-fragment">
+    precision mediump float ;
+    uniform vec2 u_CanvasSize ;
+    uniform float u_Spin ;
+    uniform float u_Stamp ;
+    float cosPin = cos(u_Spin) ;
+    float sinPin = sin(u_Spin) ;
+    mat2 rotateM2 = mat2(
+        cosPin, sinPin,
+        -sinPin, cosPin
+    ) ;
+
+    float angOffset2=u_Stamp*0.001;
+    float cosAng2=cos(angOffset2);
+    float sinAng2=sin(angOffset2);
+    mat2 modelMatrix1=mat2(
+      cosAng2,sinAng2,
+      -sinAng2,cosAng2
+    );
+
+    vec2 center  = u_CanvasSize / 2.0;
+    float pi2 = radians(360.0);
+
+    float a = 0.5 ;
+    float omega = 4.0 ;
+
+    float getBright(vec2 pole){
+      
+        pole=center+modelMatrix1*(pole-center);
+        vec2 p =gl_FragCoord.xy-pole;
+        p=modelMatrix1*p;
+        float ang=atan(p.y,p.x);
+        return a*sin(omega*ang)+0.5;
+      }
+
+
+
+// 放射也是角度渐变的一种 只不过这里把换成了对应的亮度 看上去就只有黑白
+// 之前的是分段的现在是连续的
+    void main() {
+    vec2 min = u_CanvasSize * 0.25 ;
+    vec2 max = u_CanvasSize * 0.85 ;
+    float bright1 = getBright(min);
+    float bright2 = getBright(max);
+    float f = (bright1 + bright2)* 0.55;
+    gl_FragColor = vec4(f,f,f,1) ;    
+    }
+</script>
+
+<script type="module">
+    import { initShaders , } from '../../util/initShader.js'
+    import Poly from '../../util/Poly-1.js'
+
+    const canvas = document.getElementById('3d') ;
+    const vs = document.querySelector('#vertex').innerText ;
+    const fs = document.querySelector('#fragment').textContent ;
+    canvas.height = window.innerHeight ;
+    canvas.width = window.innerWidth ;
+    const gl = canvas.getContext('webgl')
+
+    
+    initShaders(gl, vs, fs) ;
+
+    gl.clearColor(0,0,0,1);
+
+    const source = new Float32Array([
+      -1, 1,
+      -1, -1,
+      1, 1,
+      1, -1
+    ]);
+
+    const rect  = new Poly({
+        gl, source,
+        types:['TRIANGLE_STRIP'],
+        attributes: {
+            a_Position :{
+                size: 2 ,
+                index: 0
+            },
+        },
+        uniforms: {
+                u_CanvasSize: {
+                    type: 'uniform2fv',
+                    value: [canvas.width, canvas.height]
+                },
+                u_Spin: {
+                    type:'uniform1f',
+                    value:0.0 
+                },
+                u_Stamp: {
+                    type:'uniform1f',
+                    value:0.0 
+                }    
+            }
+
+
+    })
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    rect.draw()
+
+    let preTime = 0 ;
+    let timelen = 1800 ; //时间间隔
+
+    ;(function ani(stamp){
+       rect.uniforms.u_Spin.value = stamp / 1000 ;
+        //到了下一帧
+            rect.uniforms.u_Stamp.value = stamp ;
+            
+        
+        rect.updateUniform() ;
+        preTime = stamp ;
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        rect.draw() ;
+        requestAnimationFrame(ani)
+    })()
+</script>
+</html>

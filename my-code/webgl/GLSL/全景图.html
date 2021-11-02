@@ -78,7 +78,7 @@
     initShaders(gl, vs, fs) ;
 
     gl.clearColor(0,0,0,1);
-
+// 这个数据集是包含了 顶点 图钉 两个系列的数据  但是我下面设置attributes的时候只有一个系列 映射出错
     const source = new Float32Array([
       -1, 1, 0, 1,
       -1, -1, 0, 0,

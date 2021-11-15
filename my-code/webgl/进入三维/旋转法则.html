@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rotate</title>
+</head>
+<body>
+    <p>
+
+    </p>
+</body>
+
+<script type="module">
+    import { Group, Matrix4, Object3D, Scene, Vector3, } from 'https://unpkg.com/three/build/three.module.js';
+
+    /* 二维旋转  行矩阵的话就是  (cosθ, sinθ) (-sinθ, cosθ) 这两分别是第一第二行向量 
+    也就是写成矩阵|cosθ, sinθ  |
+                 |-sinθ, cosθ |
+    */
+  //让银河系的本地坐标系[O2;i2,j2,k2]绕j2轴逆时针旋转20°
+  const ang2 = -20 * Math.PI / 180
+  const c2 = Math.cos(ang2)
+  const s2 = Math.sin(ang2)
+
+  const m1 = new Matrix4()
+  console.log(m1.elements)
+
+
+  let point = new Vector3(1,1,1)
+  m1.makeRotationY(Math.PI /2.0)
+  /*单轴 旋转 是影响到剩余的两个坐标的 所以公式里的才会是有四个元素 准确的说是两个向量 他们的内积就是最终结果坐标*/
+  // 绕z
+  /*
+  cos -sin   0   0
+  sin  cos   0   0
+  0     0    1   0
+  0     0    0   1
+  */
+  // 绕x
+  /*
+  1    cos   -sin   0
+  0    sin    cos   0
+  0     0      1    0
+  0     0      0    1
+  */
+  // 绕y
+  /*
+  cos   0   sin   0
+  0     1    0    0
+  -sin  0   cos   0
+  0     0    0    1
+  */
+  console.log(m1.elements)
+// 乘法
+  const point1 = point.applyMatrix4(m1)
+  console.log(point1)
+
+  
+</script>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坐标系</title>
+</head>
+<body>
+    <!-- viewBox 动的是剪裁空间 坐标系没动 -->
+    <svg 
+         viewBox="-50 -50 100 100" version="1.1"
+         xmlns="http://www.w3.org/2000/svg"
+         xmlns:xlink="http://www.w3.org/1999/xlink">
+        
+         <path d="m0 -50 v100 m50 -50 h-100 "
+              fill="none" stroke="#0ff" stroke-width="0.2" />
+         <path d="m25 5 
+                  m3 3  l-3 -3 l-3 3 m3 -3
+                  v20
+                  h20 m-3 3 l3 -3 l-3 -3 m3 3  
+                  m-20 0 
+                  l -15 15 m4 0 h-4 v-4"
+              fill="none" stroke="#111" stroke-width="1" />
+              <g style="font-size: 8px;">
+                  
+                  <text x="30"  y="5" >y</text>
+                  <text x="45"  y="21" >x</text>
+                  <text x="4"  y="35" >z</text>
+                  
+             </g>
+
+             
+             <g style="font-size: 8px;">
+                 <!-- 原点 -30 -15 -->
+                 <path d="m-30 -40 
+                         m3 3  l-3 -3 l-3 3 m3 -3
+                         v25
+                         h25 m-3 3 l3 -3 l-3 -3 m3 3  
+                         m-10 0 
+                         a 15 15 0 0 0 -15 -15
+
+                         
+                       "
+                       
+                 fill="none" stroke="#0ad" stroke-width="1" />
+                 <path d="m-19 -25 m0 5 l0 -5 l5 0"
+                      fill="none" stroke="#0af" stroke-width="0.8" />
+                 <text x="-49"  y="-1" style="font-size:3px;width:50%">视线为z轴 正视图 正角度旋转方向 
+                      即从x轴正半轴到y正半轴最近的方向</text>
+                 
+                 <text x="-25"  y="-35" >y</text>
+                 <text x="-15"  y="-17" >x</text>
+            </g>
+
+            
+            <g style="font-size: 8px;">
+                <!-- 原点 20 -15 -->
+                <path d="m40 -40 
+                        m3 3  l-3 -3 l-3 3 m3 -3
+                        v25
+                        h-25 m3 -3 l-3 3 l3 3 m-3 -3  
+                        m10 0 
+                        a 15 15 0 0 1 15 -15
+
+                        
+                      "
+                      
+                fill="none" stroke="#0ad" stroke-width="1" />
+                <path d="m29 -25 m0 -5 v5 h5 "
+                     fill="none" stroke="#0af" stroke-width="0.8" />
+                <text x="1"  y="-1" style="font-size:3px;width:50%">视线为x轴 右视图 正角度旋转方向 
+                     即从y轴正半轴到z正半轴最近的方向</text>
+                
+                <text x="27"  y="-35" >y</text>
+                <text x="10"  y="-17" >z</text>
+           </g>
+    </svg>
+
+</body>
+</html>

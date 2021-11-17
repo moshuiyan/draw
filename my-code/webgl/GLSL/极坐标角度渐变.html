@@ -10,6 +10,7 @@
         canvas,body {
             margin:0;
             overflow: hidden;
+            animation: name duration timing-function delay iteration-count direction fill-mode;
         }
         
     </style>
@@ -160,31 +161,18 @@ float pi2  = radians(360.0) ;
  
  const colorStops = [
    {
-     color: [123, 0, 123, 255],
+     color: [98,186,67,255],
      stop: 0
    },
+  {
+      color: [149,209,127,225],
+      stop: 0.5
+  },
    {
-     color: [255, 0, 0, 255],
-     stop: 0.3
-   },
-   {
-     color: [255, 255, 0, 255],
-     stop: 0.4
-   },
-   {
-     color: [0, 255, 0, 255],
-     stop: 0.7
-   },
-   {
-     color: [0, 0, 200, 255],
-     stop: 0.9
-   },
-   {
-    color: [123, 0, 123, 255],
+    color: [240,250,238,225],
     stop: 1
   },
  ]
- debugger
    const colorSource = parseColorStops(colorStops)
  const source = new Float32Array(
      [

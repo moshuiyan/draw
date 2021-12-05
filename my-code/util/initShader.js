@@ -1,3 +1,11 @@
+
+/**
+ * 
+ * @param {webglContext} gl 
+ * @param {vetexShader} vsSource 
+ * @param {fragmentShader} fsSource 
+ * @returns 
+ */
 export function initShaders(gl, vsSource, fsSource) {
   const program = gl.createProgram();//程序对象
   const vetexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);// 顶点 着色器对象

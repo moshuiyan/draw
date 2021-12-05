@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>连点成线</title>
+    <title style="color: bisque;">连点成线</title>
 <style>
     @keyframes wuse {
         from{ background-image: radial-gradient(#fff, #000) ;}
@@ -34,18 +34,32 @@
         attribute vec4 a_Position ;
         void main() {
             gl_Position = a_Position ;
-            gl_PointSize = 10.0 ;
+            gl_PointSize = 50.0 ;
         }
 </script>
 <script type="x-shader/x-fragment" id="fragment">
     precision mediump float ;
     uniform vec4 u_FragColor ;
+    uniform bool u_IsPOINTS ;
     void main() {
         float dist = distance(gl_PointCoord, vec2(0.5,0.5)) ;
-        if(dist < 0.5) {
-            gl_FragColor = u_FragColor ;
+        if (u_IsPOINTS){
+
+            if(dist < 0.5  ) {
+               if( dist > 0.4){
+
+                   gl_FragColor = u_FragColor ;
+               }else {
+                gl_FragColor = vec4(1.0,1.0,1,0.3) ;
+
+               }
+                
+            }else {
+                discard ;
+            }
         }else {
-            discard ;
+            gl_FragColor = u_FragColor ;
+
         }
     }
 
@@ -86,6 +100,7 @@
                 crtPoly(x,y) ;
            }else {
             //    继续当前路径
+            /* 这里可以判断 是否在当前已有的点上*/
                 poly.addVertice(x,y)
             }
         }
@@ -102,7 +117,8 @@ render()
 function crtPoly(x,y) {
      poly =new Poly({
         vertices: [x,y],
-        types: ['POINTS','LINE_STRIP']
+        types: ['LINE_STRIP', 'POINTS'],
+        circleDot: true 
     })
     sky.add(poly)
 }

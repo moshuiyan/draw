@@ -34,18 +34,26 @@
         attribute vec4 a_Position ;
         void main() {
             gl_Position = a_Position ;
-            gl_PointSize = 10.0 ;
+            gl_PointSize = 50.0 ;
         }
 </script>
 <script type="x-shader/x-fragment" id="fragment">
     precision mediump float ;
     uniform vec4 u_FragColor ;
+    uniform bool u_IsPOINTS  ;
     void main() {
         float dist = distance(gl_PointCoord, vec2(0.5,0.5)) ;
-        if(dist < 0.5) {
-            gl_FragColor = u_FragColor ;
+        if (u_IsPOINTS){
+
+            if(dist < 0.5 ) {
+                gl_FragColor = u_FragColor ;
+            }else {
+                discard ;
+            }
         }else {
-            discard ;
+// 之前没写这个 然后线的颜色默认是白的
+            gl_FragColor = u_FragColor ;
+
         }
     }
 
@@ -102,7 +110,8 @@ render()
 function crtPoly(x,y) {
      poly =new Poly({
         vertices: [x,y],
-        types: ['POINTS','LINE_STRIP']
+        types: ['POINTS','LINE_STRIP'],
+        circleDot: true
     })
     sky.add(poly)
 }

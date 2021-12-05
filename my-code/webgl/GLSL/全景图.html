@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360</title>
+    <style>
+        * {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script id="vertex" type="x-shader/x-vertex">
+    attribute vec4 a_Position ;
+    attribute vec2 a_Pin ;
+    void main () {
+        gl_Position = a_Position ;
+    }
+</script>
+<!-- 极坐标 -->
+<script id="fragment" type="x-shader/x-fragment">
+    precision mediump float ;
+    uniform vec2 u_CanvasSize ;
+    uniform float u_Spin ;
+    uniform float u_Stamp ;
+  
+ 
+
+    vec2 center  = u_CanvasSize / 2.0;
+    float pi2 = radians(360.0);
+// 采样器
+      uniform  sampler2D u_Sampler;
+
+     float diagLen = length(center) ; 
+     float getAngle (vec2 v) {
+         float ang = atan(v.y, v.x);
+         if (ang < 0.0) {
+             ang += pi2 ;
+         }
+         return ang ;
+     } 
+
+
+
+// 放射也是角度渐变的一种 只不过这里把换成了对应的亮度 看上去就只有黑白
+// 之前的是分段的现在是连续的
+    void main() {
+        vec2 p = gl_FragCoord.xy - center ;
+        float ang = getAngle(p) ;
+        float x = ang / pi2 ; //  ang的范围是[0， 2π] 所以这个结果是[0,1]
+        float len = length(p); // 片元到中心的距离
+        float y = len / diagLen ; // 除以 画布对角线的一半 得到归一化的极径
+        // uv坐标系是 左上角原点
+        vec4 color = texture2D(u_Sampler, vec2(x,y)) ;
+        if (p.x > 0.0 && abs(p.y) < 1.5){
+            color  = texture2D(u_Sampler, vec2(0,y) ) ;
+        }
+        gl_FragColor = color ;    
+    }
+</script>
+
+<script type="module">
+    import { initShaders , } from '../../util/initShader.js'
+    import Poly from '../../util/poly.js'
+
+    const canvas = document.getElementById('3d') ;
+    const vs = document.querySelector('#vertex').innerText ;
+    const fs = document.querySelector('#fragment').textContent ;
+    canvas.height = window.innerHeight ;
+    canvas.width = window.innerWidth ;
+    const gl = canvas.getContext('webgl')
+
+    
+    initShaders(gl, vs, fs) ;
+
+    gl.clearColor(0,0,0,1);
+// 这个数据集是包含了 顶点 图钉 两个系列的数据  但是我下面设置attributes的时候只有一个系列 映射出错
+    const source = new Float32Array([
+      -1, 1, 0, 1,
+      -1, -1, 0, 0,
+      1, 1, 1, 1,
+      1, -1, 1, 0
+    ]);
+
+    const rect  = new Poly({
+        gl, source,
+        types:['TRIANGLE_STRIP'],
+        type:'TRIANGLE_STRIP',
+        attributes: {
+            a_Position :{
+                size: 2 ,
+                index: 0
+            },
+            a_Pin: {
+                size: 2,
+                index: 2
+            }
+        },
+        uniforms: {
+                u_CanvasSize: {
+                    type: 'uniform2fv',
+                    value: [canvas.width, canvas.height]
+                },
+                u_Stamp: {
+                    type:'uniform1f',
+                    value:0.0 
+                }    
+            }
+
+
+    })
+
+    const image = new Image() ;
+    image.src = '../../room.jpg';
+    image.onload = ()=> {
+        rect.maps = {
+            u_Sampler:{image}
+        }
+        rect.updateMaps() ;
+        render() ;
+    }
+
+    function render() {
+
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        rect.draw()
+    }
+
+
+
+</script>
+</html>

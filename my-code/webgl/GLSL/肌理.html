@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>肌理</title>
+    <style>
+        * {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script id="vertex" type="x-shader/x-vertex">
+    attribute vec4 a_Position ;
+    void main () {
+        gl_Position = a_Position ;
+    }
+</script>
+<!-- 有韵律的杂色 -->
+<script id="fragment" type="x-shader/x-fragment">
+    precision mediump float ;
+    uniform vec2 u_CanvasSize ;
+
+    float rand1 (vec2 fragCoord) {
+        vec2 v = fragCoord - u_CanvasSize /2.0 ;
+        return fract(
+            atan(v.x,v.y)* 500.0 
+        );
+    }
+    // xiugai
+    float rand2 (vec2 fragCoord){
+        vec2 a= vec2(0.1234,0.5678);
+        float n= dot(fragCoord,a);
+        return fract(tan(n)*10.0);
+    }
+    // 修改a的值
+    float rand3 (vec2 fragCoord){
+        vec2 a= vec2(0.1034,0.1078);
+        float n= dot(fragCoord,a);
+        return fract(tan(n));
+    }
+    // 修改a的值
+    float rand4 (vec2 fragCoord){
+        vec2 a= vec2(0.1078,0.1078);
+        float n= dot(fragCoord,a);
+        return fract(tan(n));
+    }
+
+    void main() {
+        float f = rand4(gl_FragCoord.xy) ;
+        gl_FragColor = vec4(f,f,f,1); 
+    }
+</script>
+
+<script type="module">
+    import { initShaders , } from '../../util/initShader.js'
+    import Poly from '../../util/Poly-1.js'
+
+    const canvas = document.getElementById('3d') ;
+    const vs = document.querySelector('#vertex').innerText ;
+    const fs = document.querySelector('#fragment').textContent ;
+    canvas.height = window.innerHeight ;
+    canvas.width = window.innerWidth ;
+    const gl = canvas.getContext('webgl')
+
+
+    
+    initShaders(gl, vs, fs) ;
+
+    gl.clearColor(0,0,0,1);
+
+    const source = new Float32Array([
+      -1, 1,
+      -1, -1,
+      1, 1,
+      1, -1
+    ]);
+
+    const rect  = new Poly({
+        gl, source,
+        types:['TRIANGLE_STRIP'],
+        attributes: {
+            a_Position :{
+                size: 2 ,
+                index: 0
+            },
+        },
+        uniforms: {
+                u_CanvasSize: {
+                    type: 'uniform2fv',
+                    value: [canvas.width, canvas.height]
+                }
+            }
+
+
+    })
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    rect.draw()
+</script>
+</html>

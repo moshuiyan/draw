@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>连点成线</title>
+    <title style="color: bisque;">连点成线</title>
 <style>
     @keyframes wuse {
         from{ background-image: radial-gradient(#fff, #000) ;}
@@ -40,18 +40,24 @@
 <script type="x-shader/x-fragment" id="fragment">
     precision mediump float ;
     uniform vec4 u_FragColor ;
-    uniform bool u_IsPOINTS  ;
+    uniform bool u_IsPOINTS ;
     void main() {
         float dist = distance(gl_PointCoord, vec2(0.5,0.5)) ;
         if (u_IsPOINTS){
 
-            if(dist < 0.5 ) {
-                gl_FragColor = u_FragColor ;
+            if(dist < 0.5  ) {
+               if( dist > 0.4){
+
+                   gl_FragColor = u_FragColor ;
+               }else {
+                gl_FragColor = vec4(1.0,1.0,1,0.3) ;
+
+               }
+                
             }else {
                 discard ;
             }
         }else {
-// 之前没写这个 然后线的颜色默认是白的
             gl_FragColor = u_FragColor ;
 
         }
@@ -94,6 +100,7 @@
                 crtPoly(x,y) ;
            }else {
             //    继续当前路径
+            /* 这里可以判断 是否在当前已有的点上*/
                 poly.addVertice(x,y)
             }
         }

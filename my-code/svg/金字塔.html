@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四棱台</title>
+</head>
+<style> 
+    @keyframes spin{
+        from{
+            transform: rotateY(0deg);
+        }
+        50% {
+            transform: rotateY(180deg);
+
+        }
+        100%{
+            transform: rotateY(360deg);
+
+        }
+    }
+    .docker {
+        position: relative;
+        height: 200px;
+        width: 200px;
+        perspective: 10000px;
+        margin: 0 auto;
+        /* animation: spin 5s linear 0s infinite ; */
+        transform-style: preserve-3d;
+        transform: rotate3d(1, 100, 1, 159deg);
+    }
+    .triangle{
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin:center bottom ;
+    }
+    /* 使用transform之后 本地坐标轴也会跟着转 y轴绕x轴旋转45度之后就是（0，71， -0.71）所以简单的办法就是先大转 后小转 
+    也不太行 旋转轴必过旋转中心 所以还是得先位移再旋转 位移不会改变旋转轴*/
+/*这里的旋转也符合右手坐标系 */
+    .triangle.l{
+        transform:translate3d(0,0,100px)  rotateX(45deg) ;
+
+    }
+/* 同样是列主序 y轴公式角度是顺时针*/
+    .triangle.t{
+        transform:  matrix3d(1,0,0,0,
+                             0,1,0,0,
+                             0,0,1,0,
+                             -100,0,0,1 )  
+                  
+                             matrix3d(0,0,1,0,
+                                      0, 1,0,0,
+                                      -1, 0,0, 0,
+                                      0,0, 0, 1) 
+                            matrix3d( 1, 0,0,  0,
+                                      0, 0.7,0.7,  0,
+                                      0, 0.7,-0.7,  0,
+                                      0, 0, 0, 1)                              ;
+
+    }
+    .triangle.b{
+        transform: translate3d(0,0,-100px)  rotateY(-180deg) rotateX(45deg) ;
+
+    }
+    .triangle.r{
+        transform: translate3d(100px,0,0) rotateY(-270deg)  rotateX(45deg);
+
+    }
+</style>
+<body>
+    <div class="docker">
+
+        <svg class="triangle l" width="200" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink">
+            <polygon points="10,6 0, 20 20 ,20 " fill="#aa0" />
+        </svg>
+        <svg class="triangle r" width="200" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink">
+            <polygon points="10,6 0, 20 20 ,20 " fill="#a00" />
+        </svg>
+        <svg class="triangle t" width="200" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink">
+            <polygon points="10,6 0, 20 20 ,20 " fill="#0aa" />
+        </svg>
+        <svg class="triangle b" width="200" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink">
+            <polygon points="10,6 0, 20 20 ,20 " fill="#a0a" />
+        </svg>
+
+    </div>
+</body>
+
+</html>

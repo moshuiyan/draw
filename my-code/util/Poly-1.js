@@ -125,7 +125,7 @@ export default class Poly {
       if (!minFilter || minFilter > 9729) {
         gl.generateMipmap(gl.TEXTURE_2D)
       }
-//  纹理参数  缩小滤波器
+//  纹理参数  缩小滤波器 
 
       minFilter&&gl.texParameteri(
         gl.TEXTURE_2D,

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解决拉伸</title>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+    attribute vec4 a_Position;
+    uniform mat4 u_ProjectionMatrix;
+    void main(){
+      gl_Position = u_ProjectionMatrix*a_Position;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragment">
+    precision mediump float;
+    uniform vec4 u_Color;
+    void main(){
+      gl_FragColor=u_Color;
+    }
+</script>
+
+<script type="module">
+    import { initShaders , parseColorStops} from '../../util/initShader.js';
+    import { Matrix4, Vector3, Quaternion, Object3D, OrthographicCamera } from 'https://unpkg.com/three/build/three.module.js';
+    import Poly from '../../util/Poly-1.js' ;
+
+    const canvas = document.getElementById('3d') ;
+    canvas.height = window.innerHeight -20;
+    canvas.width = window.innerWidth -20;
+
+    const gl = canvas.getContext('webgl') ;
+    canvas.height = window.innerHeight -20;
+    const vs = document.getElementById('vertex').innerText;
+    const fs = document.getElementById('fragment').textContent;
+    
+    initShaders(gl, vs, fs)
+    gl.clearColor(0, 0, 0, 1)
+    // Number of significant digits. Must be in the range 1 - 21, inclusive.
+    Number.prototype.toPrecision()
+// 正交投影矩阵
+    const projectionMatrix = new Matrix4();
+// 定义相机世界的单位 高度的一半
+    const halfH = 2;
+// 画布宽高比
+    const ratio = canvas.width / canvas.height ;
+    gl.clear(gl.COLOR_BUFFER_BIT)
+
+    
+
+
+</script>
+</html>

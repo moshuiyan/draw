@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空间向量</title>
+</head>
+<body>
+    <canvas id="ca1"></canvas>
+</body>
+<script type="x-shader/x-fragment">
+  mat4 mat = [1,1,1,1,
+              2,2,2,1,
+              3,3,3,1,  
+              0,2,0,3,]
+   void main() {
+     
+   }           
+</script>
+<script type="x-shader/x-vertex">
+  attribute vec4 a_Point ;
+  void main(){
+    gl_Position = a_Point ;
+  }
+</script>
+<script type="module"> 
+
+    import { Group, Matrix4, Object3D, Scene, Vector3, } from 'https://unpkg.com/three/build/three.module.js';
+  //  import { Matrix4, Vector3, Object3D, Scene, Group } from '../../../crystalocean-three.js-master/three.js/build/three.module.js'
+
+    /* 
+    空间向量同样遵循三角形法则
+    平行四边形法则
+    三个不共面的向量和 等于以他们为邻边的平行六面体的对角线表示的向量
+    如果 向量 a b 不共线 则向量c与a b共面的条件是存在 唯一实数 x，y
+    ax + by = c ;
+    用向量基地来表示一个向量 叫向量的线性表示 组合
+    任意不共面的三个向量可以作基向量
+    通常规定 向量的夹角 <a,b> ∈ [0, π] ;
+    空间向量也有向量积 a·b = |a|*|b|*cos<a,b> 结果是一个实数
+    向量相互垂直 内积为0
+    平行可以用另一向量线性表示
+
+
+
+    直角坐标系中的坐标就是用单位正交基地 来表示一个向量
+    空间直角坐标系Oxyz 表示为 [O;i,j,k] ;
+    用矩阵来表示    将 i j k  又分解为直角坐标系的基地
+    m1[
+    i.x, j.x, k.x , 0 ,
+    i.y, j.y, k.y , 0 ,
+    i.z, j.z, k.z , 0 ,
+    O.x, O.y, O.z , 1 ,
+    ]
+    [O2, i2,j2,k2]
+    坐标系m2[
+    i2.x, j2.x, k2.x , 0 ,
+    i2.y, j2.y, k2.y , 0 ,
+    i2.z, j2.z, k2.z , 0 ,
+    O2.x, O2.y, O2.z , 1 ,
+    ]
+
+    m2坐标系 的点 (x,y,z)
+    要把m2 转为m1 坐标 m1*m2*(x,y)
+    O 是坐标原点 ， i,j,k是坐标向量
+    起点坐标 减终点坐标 就是这个有向线段的向量坐标表示
+
+    */
+// 列主序的写法 每一列代表一个 点 向量 
+/* 最后一行代表坐标原点   elements是列主序 直接传参是行主序*/
+    const m1 = new Matrix4()
+    m1.elements = [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ]
+
+    
+    const m2 = new Matrix4()
+    m2.elements = [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      1, 2, 3, 1,
+    ]
+    const m3 = new Matrix4()
+    m3.elements = [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      4, 5, 6, 1,
+    ]
+    /* 这里是列主序 就这么说吧， 列主序 那么结果的每一位等于对应的前列 后行相乘
+        [
+        c00,c10,c20,c30 ,
+        c01,c11,c21,c31 ,
+        c02,c12,c22,c32 ,
+        c03,c13,c23,c33 ,
+        ] * ( x,y,x,w)  
+        对于点 w = 1
+        虽然这是四维矩阵但是 这是三维空间
+        就拿x 来说 其结果就是 x * c00 + y *c01 + z* c02 + w* c03
+        先说位移和缩放 ， 我们如果希望看到容易控制的结果那么 c01 c02  全部都要为零
+        这样结果就是 x* c00 + w*c03 = x*c00 c03 
+        很容易看出 缩放比例就是c00 位移就是c03
+
+        所以我们的变换矩阵一般是这么写的
+
+        [
+        c00, 0,    0, c30 ,
+         0, c11,   0, c31 ,
+         0,  0,  c22, c32 ,
+        c03,c13, c23,   1 ,
+        ]
+        也就是左上角是个对角矩阵
+        这样位移和缩放一目了然，。
+        至于旋转法则 不要慌 下次再讲
+        
+    
+    */
+    // 太阳 的本地 坐标位
+    const p2 = new Vector3(4,5,6)
+    // 宇宙
+    const universe = new Scene()
+    universe.applyMatrix4(m1) //three 默认的坐标系就是单位矩阵
+
+    // 银河系
+    const galaxy = new Group() 
+    galaxy.applyMatrix4(m2)
+
+    // 太阳系
+    const solar = new Group()
+    solar.applyMatrix4(m3)
+
+    const sun = new Object3D()
+    sun.position.copy(p2) 
+/*在被add进一个坐标系后物体 的坐标就是相对其原点的坐标了*/
+    solar.add(sun)
+    galaxy.add(solar)
+
+    universe.add(galaxy)
+
+
+    const p1 = new Vector3()
+    sun.getWorldPosition(p1)
+    console.log(p1)
+// 这里太阳系的坐标系  受到银河系坐标的影响 两次位移的结果就是两次位移（向量）的合成
+
+
+</script>
+</html>

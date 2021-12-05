@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四元数</title>
+</head>
+<body>
+    <p>
+
+    </p>
+</body>
+
+<script type="module">
+    import { Group, Matrix4, Object3D, Scene, Vector3,Quaternion } from 'https://unpkg.com/three/build/three.module.js';
+
+    /* 二维旋转  行矩阵的话就是  (cosθ, sinθ) (-sinθ, cosθ) 这两分别是第一第二行向量 
+    也就是写成矩阵|cosθ, sinθ  |
+                 |-sinθ, cosθ |
+    */
+  //让银河系的本地坐标系[O2;i2,j2,k2]绕j2轴逆时针旋转20°
+  const ang2 = -20 * Math.PI / 180
+  const c2 = Math.cos(ang2)
+  const s2 = Math.sin(ang2)
+
+  const m1 = new Matrix4()
+  console.log(m1.elements)
+
+
+  let point = new Vector3(1,1,1)
+  m1.makeRotationY(Math.PI /2.0)
+  /*单轴 旋转 是影响到剩余的两个坐标的 所以公式里的才会是有四个元素 准确的说是两个向量 他们的内积就是最终结果坐标*/
+  // 绕z
+  /*
+  cos -sin   0   0
+  sin  cos   0   0
+  0     0    1   0
+  0     0    0   1
+  */
+  // 绕x
+  /*
+  1    cos   -sin   0
+  0    sin    cos   0
+  0     0      1    0
+  0     0      0    1
+  */
+  // 绕y
+  /*
+  cos   0   sin   0
+  0     1    0    0
+  -sin  0   cos   0
+  0     0    0    1
+  */
+  console.log(m1.elements)
+// 乘法
+  const point1 = point.applyMatrix4(m1)
+  console.log(point1)
+const p3 = new Vector3(1,1,1) ;
+const p4 = p3.clone()
+const pi = Math.PI
+const [ang5,ang6,ang7] = [pi/2,pi/2,pi/2] ;  
+  /* 欧拉是绕单轴多次旋转 这个makeRotation 是逆时针 所以y轴这里旋转实际上是反着的*/
+  
+const mx =  new Matrix4().makeRotationX(ang5)
+const my =  new Matrix4().makeRotationY(ang6)
+const mz =  new Matrix4().makeRotationZ(ang7)
+  // mx x my  x mz  
+p4.applyMatrix4( mx.multiply(my).multiply(mz) )
+console.log(p4)
+
+/*四元数是绕任意轴 旋转一定角度   这里的实现方式是先用单轴旋转 把任意轴 转到 与某个坐标轴同向 然后旋转一定角度 然后再把任意轴尼变换转回去*/
+// 这构造函数的参数就是简单的默认值
+const p5 = new Vector3(1,1,1) ;
+const rotateAxis = new Vector3(1,1,1);
+//先绕 x轴 逆时针45 转到xoz平面
+const  mx1 = new Matrix4().makeRotationX(ang5/2)  
+const  mx2 = new Matrix4().makeRotationX(-ang5/2)
+// 然后 绕y轴逆时针 30 与 z轴重合
+const  my1 = new Matrix4().makeRotationY(-ang5/3)  
+const  my2 = new Matrix4().makeRotationY(ang5/3)
+
+// 注意这里旋转轴是有方向的   旋转 45度
+const m33 = new Matrix4().makeRotationZ(ang2/2)
+
+const p55 = p5.clone() ;
+
+p5.applyMatrix4(mx1)
+console.log(p5, 'p5')
+
+p5.applyMatrix4(my1)
+console.log(p5, 'p5')
+
+p5.applyMatrix4(m33)
+
+
+// 转回去
+p5.applyMatrix4(my2)
+p5.applyMatrix4(mx2)
+
+console.log(p5, 'p5')
+
+const siyuanshu = new Quaternion();
+siyuanshu.setFromAxisAngle(rotateAxis, ang2/2)
+const m44 = new Matrix4().makeRotationFromQuaternion(siyuanshu)
+p55.applyMatrix4(m44)
+console.log(p55, 'p55')
+
+</script>
+</html>

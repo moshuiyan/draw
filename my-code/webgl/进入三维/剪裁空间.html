@@ -36,7 +36,10 @@
     initShaders(gl,vs, fs) ;
     
     const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-    /*webgl默认可视区域大小 以（0,0,0）为原点 1个单位见方  也就是体积 是8 个单位的立方*/ 
+    /*webgl默认可视区域大小 以（0,0,0）为原点 1个单位见方  也就是体积 是8 个单位的立方
+    裁剪空间的坐标系是左手坐标系， z轴正方向是顺着我们的视线，也就是垂直屏幕朝里
+    */ 
+   
     gl.vertexAttrib4fv(a_Position, new Float32Array([1,0,-1.0,1]))
     gl.clearColor(0, 0, 0, 1) ;
     gl.clear(gl.COLOR_BUFFER_BIT)

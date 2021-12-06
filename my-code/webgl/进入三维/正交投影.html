@@ -43,6 +43,7 @@
     透视投影矩阵 perspective projection：不同深度的物体具备近大远小的透视规则。
    */
    /* 投影矩阵的建立需要先建立相机 一个相机包括 一个可视空间和视点
+   这个可视空间是逻辑上的，剪裁空间可认为是真实存在的，投影矩阵就是把可视空间缩放到裁剪空间的大小， 并位移到和裁剪空间重合。
     顺着视线看过去 的正面叫 近裁剪面 ，按这个相对位置，立体空间的其他面叫做 上下左右边界 和远裁剪面
     
     near就是视点到近裁剪面的距离
@@ -53,21 +54,22 @@
 // canvas上显示的就是整个可视空间在近裁剪面上的投影， 如果裁剪面的宽高比与canvas不同 那么这个投影会被拉伸 扭曲
   /*
    *这是 three 的 Matrix4对象的方法 建立正交投影矩阵
-   * 上下左右是坐标 
+   * 上下左右是坐标 ，near 和 far 是距离 不过是相对原点 实际上也是坐标
    */
    function  makeOrthographic( left, right, top, bottom, near, far ) {
 
     const te = this.elements;
-    const w = 1.0 / ( right - left );     // 长
+    const w = 1.0 / ( right - left );     // 长的倒数 缩放系数要乘2 ， 把w缩放到 2个x轴单位 
     const h = 1.0 / ( top - bottom );   // 高
     const p = 1.0 / ( far - near );   // 宽
 
-    const x = ( right + left ) * w;  // (right+ left) /2 是中点   把w缩放到 2个x轴单位 
+    const x = ( right + left ) * w;  // (right+ left) /2 是中点， 缩放后是(r + l )/2 * 2*w  ， 将缩放后相机世界的中心位移到原点 
     const y = ( top + bottom ) * h;
     const z = ( far + near ) * p;
 
     te[ 0 ] = 2 * w;    te[ 4 ] = 0;    te[ 8 ] = 0;    te[ 12 ] = - x;
     te[ 1 ] = 0;    te[ 5 ] = 2 * h;    te[ 9 ] = 0;    te[ 13 ] = - y;
+    /* 剪裁空间是左手坐标系 */
     te[ 2 ] = 0;    te[ 6 ] = 0;    te[ 10 ] = - 2 * p;    te[ 14 ] = - z;
     te[ 3 ] = 0;    te[ 7 ] = 0;    te[ 11 ] = 0;    te[ 15 ] = 1;
 

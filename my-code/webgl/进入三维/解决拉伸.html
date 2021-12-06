@@ -13,7 +13,8 @@
     attribute vec4 a_Position;
     uniform mat4 u_ProjectionMatrix;
     void main(){
-      gl_Position = u_ProjectionMatrix*a_Position;
+  //    gl_Position = u_ProjectionMatrix*a_Position;
+      gl_Position = a_Position;
     }
 </script>
 <script type="x-shader/x-fragment" id="fragment">
@@ -46,10 +47,49 @@
     const projectionMatrix = new Matrix4();
 // 定义相机世界的单位 高度的一半
     const halfH = 2;
-// 画布宽高比
+// 画布宽高比,相机世界要和画布保持宽高比
     const ratio = canvas.width / canvas.height ;
+    const halfW = halfH * ratio;
+    //相机边界
+    const [left, right, top, bottom, near, far]=[
+        -halfW, halfW, halfH, -halfH, 0, 4
+    ] 
+    // 获取正交投影矩阵
+    projectionMatrix.makeOrthographic(left, right, top, bottom, near, far)
+    
     gl.clear(gl.COLOR_BUFFER_BIT)
+    const triangle = new Poly({
+      gl,
+      source: [
+        0, 0.3, -0.2,
+        - 0.3, -0.3, -0.2,
+        0.3, -0.3, -0.2
+      ],
+      types: ['TRIANGLES'],
+      attributes: {
+        a_Position: {
+          size: 3,
+          index: 0
+        },
+      },
+      uniforms: {
+        u_Color: {
+          type: 'uniform4fv',
+          value: [1, 1, 0, 1]
+        },
+        // u_ProjectionMatrix: {
+        //   type: 'uniformMatrix4fv',
+        //   value: projectionMatrix.elements
+        // },
+      }
+    })
 
+    render()
+
+    function render() {
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      triangle.draw()
+    }
     
 
 

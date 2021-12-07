@@ -157,6 +157,7 @@ export default class Poly {
 
     updateAttribute() {
          const { gl,attributes, categoryBytes, source } = this ;
+         /*创建新的缓冲空间  */
          const sourceBuffer = gl.createBuffer() 
          gl.bindBuffer(gl.ARRAY_BUFFER, sourceBuffer) 
          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(source), gl.STATIC_DRAW)

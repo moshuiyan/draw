@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body style="text-align: center;">
+    <canvas style="margin:10px auto;" id="canvas" width="800" height="600" tabindex="0"></canvas>
+    <!-- <svg width="100%" height="100%" viewBox="0 0 400 400"
+     xmlns="http://www.w3.org/2000/svg">
+
+    <path d='M0,0 C8,33.90861 25.90861,16 48,16 C70.09139,16 88,33.90861 88,56 C88,78.09139 105.90861,92 128,92 C150.09139,92 160,72 160,56 C160,40 148,24 128,24 C108,24 96,40 96,56 C96,72 105.90861,92 128,92 C154,93 168,78 168,56 C168,33.90861 185.90861,16 208,16 C230.09139,16 248,33.90861 248,56 C248,78.09139 230.09139,96 208,96 L48,96 C25.90861,96 8,78.09139 8,56 Z'
+            fill="orange" stroke="black" stroke-width="3" />
+    </svg> -->
+</body>
+<script>
+    const path = 'M0,0 C8,33.90861 25.90861,16 48,16 C70.09139,16 88,33.90861 88,56 C88,78.09139 105.90861,92 128,92 C150.09139,92 160,72 160,56 C160,40 148,24 128,24 C108,24 96,40 96,56 C96,72 105.90861,92 128,92 C154,93 168,78 168,56 C168,33.90861 185.90861,16 208,16 C230.09139,16 248,33.90861 248,56 C248,78.09139 230.09139,96 208,96 L48,96 C25.90861,96 8,78.09139 8,56 Z';
+/* 命名空间应该就是第一个参数是 命名 第二个一样 */
+   const pathElement = document.createElementNS('http://www.w3.org/2000/svg',"path"); 
+   pathElement.setAttributeNS(null, 'd', path);
+   document.body.appendChild(pathElement)
+   /* 
+   **SVGPathElement.getTotalLength()** 该方法返回用户代理对路径总长度(以用户单位为单位)的计算值。
+     SVGGeometryElement.getPointAtLength()** 方法沿路径返回给定距离的点。
+    */
+   /* 关键就是获取 */
+     const length = pathElement.getTotalLength() | 0;
+     const duration = 1000; // 动画总时长
+     const interval = length / duration;
+     const canvas = document.getElementById('canvas');
+     const context = canvas.getContext('2d');
+
+     let  step = 0, points=[];
+    //  document.querySelector('.a').getElementsByClassName('b')
+    animate()
+     function move(){
+         context.clearRect(0,0, canvas.width, canvas.height);
+         let alpha = 0, a= 1 ;
+         for(const {x,y} of points){
+             alpha+=a ;
+             if(alpha == 300 || alpha == 0){
+                 a=-a
+                
+             }
+         context.beginPath();
+         /* x: number, y: number, radius: number, startAngle: number, endAngle: number, */
+             context.arc(x,y,5,0,Math.PI *2);
+             context.fillStyle=`rgb(${225-alpha},${alpha},225,${ alpha /300})`;
+             context.fill() ;
+             context.closePath();
+            }
+         
+     }
+     console.log(pathElement.getTotalLength())
+     function animate(){
+      
+         let {x, y} = pathElement.getPointAtLength(step)  ;
+         console.log(x,y)
+        //  x = x|0 ;
+        //  y = y|0 ;
+
+         points.push({x:2 *x,y: 2*y})
+    /*      if(points.length > 600 ){
+             points.shift()
+         } */
+         move();
+         step++
+         step%=length
+         if(!step){return}
+         requestAnimationFrame(animate) ;
+     }
+</script>
+</html>

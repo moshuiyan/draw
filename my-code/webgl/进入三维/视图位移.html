@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+    attribute  vec4 a_Position ;
+    uniform mat4 uniformMatrix4fv ;
+    void main(){
+        gl_Position =   uniformMatrix4fv * a_Position;
+        gl_PointSize = 100.0 ;
+    }
+</script>
+<script type="x-shader/x-fragment" id="frag">
+    precision mediump float  ;
+    uniform vec4 u_Color ;
+    void main(){
+// 颜色设置出问题了
+      gl_FragColor = u_Color ; 
+    }
+</script>
+<script type="module">
+    import Poly from '../../util/Poly-1.js' ;
+    import { Matrix4, Vector3, Quaternion, Object3D, OrthographicCamera } from 'https://unpkg.com/three/build/three.module.js';
+    import { initShaders , parseColorStops} from '../../util/initShader.js';
+    const canvas = document.getElementById('3d') ;
+    const fs  = document.getElementById('frag').textContent ;
+    const vs  = document.getElementById('vertex').innerText ;
+
+    canvas.width = self.innerWidth -10;
+    canvas.height = self.innerHeight -50;
+
+    const gl = canvas.getContext('webgl') ;
+    initShaders(gl,vs, fs) ;
+   /* 正交投影 假如视线是朝着z轴 那么这个投影就是忽略掉 剪裁空间内各顶点的z坐标，不过有层级z轴大的在最上面，x，y不变 投影到画布
+    先把相机世界的顶点投影 到剪裁空间内， 
+    然后把剪裁空间的点 投影到画布上 （这一步肯定是正交投影）  
+    通过相机世界将现实世界投射到裁剪空间中的矩阵。
+
+    正交投影矩阵 orthographic projection：不同深度的物体不具备近大远小的透视规则。
+    透视投影矩阵 perspective projection：不同深度的物体具备近大远小的透视规则。
+   */
+   /* 投影矩阵的建立需要先建立相机 一个相机包括 一个可视空间和视点
+   这个可视空间是逻辑上的，剪裁空间可认为是真实存在的，投影矩阵就是把可视空间缩放到裁剪空间的大小， 并位移到和裁剪空间重合。
+    顺着视线看过去 的正面叫 近裁剪面 ，按这个相对位置，立体空间的其他面叫做 上下左右边界 和远裁剪面
+    
+    near就是视点到近裁剪面的距离
+    far 就是视点到远裁剪面的距离
+   正交投影的可视空间是个立方体，
+   透视投影的可视空间是个四棱台，
+    */
+// canvas上显示的就是整个可视空间在近裁剪面上的投影， 如果裁剪面的宽高比与canvas不同 那么这个投影会被拉伸 扭曲
+  /*
+   *这是 three 的 Matrix4对象的方法 建立正交投影矩阵
+   * 上下左右是坐标 ，near 和 far 是距离 不过是相对原点 实际上也是坐标
+   */
+   
+/*一个矩阵拆解来看，是先缩放再位移 */
+
+
+    /*剪裁空间大小 以（0,0,0）为原点 1个单位见方  也就是体积 是8 个单位的立方*/ 
+
+
+// 定义相机世界的单位 高度的一半
+const halfH = 2;
+// 画布宽高比,相机世界要和画布保持宽高比
+    const ratio = canvas.width / canvas.height ;
+    const halfW = halfH * ratio;
+    //相机边界
+    const [left, right, top, bottom, near, far]=[
+        -halfW, halfW, halfH, -halfH, 0, 4
+    ] 
+    /* 定义正交相机 */
+    const camera = new OrthographicCamera( left, right, top, bottom, near, far)
+    camera.position.set(0,0,1);
+    // [-1, 3]  [1,-3] []
+    /* 移动相机后要更新其世界坐标位 
+    // updateWorldMatrix() 方法主要是考虑到了相机存在父级的情况。
+
+    updateWorldMatrix() 方法会把更新后的世界坐标系写进写进相机的matrixWorld 属性里。*/
+    camera.updateWorldMatrix(true) ;
+    console.log(camera.matrixWorld.elements)
+/* 所谓坐标系的矩阵是指，本地坐标乘这个矩阵 能换算为世界坐标位， 也就是本地坐标系相对于世界坐标系的变换 */
+    const pvMatrix = new Matrix4();
+    /* 投影矩阵 乘 世界矩阵的逆矩阵   相机的世界矩阵就是 相机相对原点的变换，相机的运动和 相机世界里顶点的运动是相反的 */
+    pvMatrix.multiplyMatrices(
+        camera.projectionMatrix, 
+        camera.matrixWorldInverse
+    );
+    console.log(pvMatrix.elements);
+    const triangle = new Poly({
+      gl,
+      source: [
+        0.3, 0.3, 1.2,
+        - 0.3, -0.3, -0.2,
+        0.3, -0.3, -0.2,
+   
+      ],
+      types: ['TRIANGLES'],
+      attributes: {
+        a_Position: {
+          size: 3,
+          index: 0
+        },
+      },
+      uniforms: {
+        u_Color: {
+          type: 'uniform4fv',
+          value: [1.0, 0.0, 0.0, 1.0]
+        },
+        uniformMatrix4fv: {
+          type: 'uniformMatrix4fv',
+          value: pvMatrix.elements
+        },
+      }
+    })
+
+    const triangle2 = new Poly({
+      gl,
+      source: [
+       
+        0.3, 0.3, -0.2,
+        - 0.0, -0.3, -0.2,
+        0.6, -0.3, -0.2
+      ],
+      types: ['TRIANGLES'],
+      attributes: {
+        a_Position: {
+          size: 3,
+          index: 0
+        },
+      },
+      uniforms: {
+        u_Color: {
+          type: 'uniform4fv',
+          value: [1.0, 0.0, 1.0, 1.0]
+        },
+        uniformMatrix4fv: {
+          type: 'uniformMatrix4fv',
+          value: pvMatrix.elements
+        },
+      }
+    })
+
+    
+    /* 现在的工具类 new 两个poly实际上共用一个着色器 后面的一旦初始化， 就会覆盖前面的
+    所以需要在画图之前再次手动初始化。
+    */
+    function render() {
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        triangle.init() ;
+        triangle.draw()
+        triangle2.init()
+        triangle2.draw()
+
+    }
+    gl.clearColor(0, 0, 0, 1) ;
+    render()
+
+</script>
+</html>

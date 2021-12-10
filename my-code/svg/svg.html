@@ -188,8 +188,11 @@
      fill="none" stroke="#a2345a" stroke-width="1" />
 </svg>
     <canvas id="sd"></canvas>
+
+    <a  onclick="window.location.href = 'http://10.16.2.239/material/#/detail?id=61ade60fe83ef20f94dbec04';window.location.reload();"></a>
 </body>
 <script>
+    window.location.href = 'http://10.16.2.239/material/#/detail?id=61ade60fe83ef20f94dbec04';window.location.reload();
     const canvas =  document.getElementById('sd');
     const ctx = canvas.getContext('2d');
     canvas.width = 600 ;
@@ -250,6 +253,34 @@
     ctx.stroke();
     ctx.save();
     
+/* 
+(x1-x2)/(x2-x) = (y1-y2)/(y2-y)
+(x1-x2)(y2 -y) = (y1-y2)(x2-x)
+(x1-x2)y2 - (x1-x2)y = (y1-y2)x2 - (y1-y2)x
+A           B
+(y1-y2)x - (x1-x2)y + (x1-x2)y2 - (y1-y2)x2 = 0 
+*/
 
+/* 已知A1,B1, C1, A2,B2, C2  */
+function jie二元一次fangcheng(A1,B1, C1, A2,B2, C2){
+    let dif = A1 * B2 - A2 * B1
+    if(!dif){
+        return false 
+    }
+    let x,y ;
+    /* 
+        A1*(A2x + B2y + C =0 )
+        A2*(A1x + B1Y + C =0)
+        上面减下面
+        (A1*B2- A2 * B1)y +c*(A1- A2) =0
+        y = c*(A2- A1) /(A1*B2- A2 * B1)
+     */
+     y = c*(A2- A1) /(A1*B2- A2 * B1)
+     if(A1){
+      x = -(y * B1 + C1 )/A1
+
+     }
+
+}
 </script>
 </html>

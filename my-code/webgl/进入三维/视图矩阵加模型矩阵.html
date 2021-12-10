@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="3d"></canvas>
+</body>
+<script type="x-shader/x-vertex" id="vertex">
+    attribute  vec4 a_Position ;
+    uniform mat4 u_ProjectionMatrix ;
+    uniform mat4 u_viewMatrix;
+    void main(){
+        gl_Position =   u_ProjectionMatrix * u_viewMatrix * a_Position;
+        gl_PointSize = 100.0 ;
+    }
+</script>
+<script type="x-shader/x-fragment" id="frag">
+    precision mediump float  ;
+    uniform vec4 u_Color ;
+    void main(){
+      gl_FragColor = u_Color ; 
+    }
+</script>
+
+<!-- 
+    齐次坐标比通常坐标多一位， 多出的一位一般称为深度w, w为0表示向量， 为1的时候 前几位表示真实坐标点， 不为1时需进行数乘
+   线性补间， 主要就是用到线性方程一对一映射的特性， 点斜式 y=kx +b ， 两点式(a1-x)/(b1-y) = (a2-x)/(b2-y) ; 
+ -->
+ <script type="module">
+     /* 透视投影矩阵 persperctive projection  将世界坐标系中的一块四棱台区域投影到裁剪空间中 ， 不同规则物体具备近大远小规则。 
+      建立透视相机需已知：
+      fov 视椎体垂直视野角度 （上面和下面的夹角，也就是视角啊）
+
+      aspect 视椎体宽高比（ 远近裁剪面的宽高比） 
+
+      near 近裁剪面到视点的距离
+      far 远裁剪面到视点的距离
+
+      基于 fov  aspect  near far 计算
+      近裁剪面 l r t b 
+      t = n * tan(fov/2)
+      b = -t ;
+      r = t * aspect   
+
+     */
+     /* 透视投影 
+        先收缩远裁剪面，这样相机世界就是一个长方体了
+        然后正交投影 缩放裁剪空间大小 位移至000
+
+        求可视区域顶点P(x1,y1,z1)在近裁剪面上的投影Pn(x2,y2,z2)
+        相似三角形 ， 不过这里也可以因为在同一条过原点的直线上,所以xyz比例保持
+        故有 x1/x2 = y1/y2 = z1/z2;
+        因 z2=-n 
+        故 x2= (-n /z1)* x1;
+
+      */
+    import Poly from '../../util/Poly-1.js' ;
+    import { Matrix4, Vector3, Quaternion, Object3D, OrthographicCamera , PerspectiveCamera} from 'https://unpkg.com/three/build/three.module.js';
+    import { initShaders , parseColorStops} from '../../util/initShader.js';
+    const canvas = document.getElementById('3d') ;
+    const fs  = document.getElementById('frag').textContent ;
+    const vs  = document.getElementById('vertex').innerText ;
+
+    canvas.width = self.innerWidth -10;
+    canvas.height = self.innerHeight -50;
+
+    const gl = canvas.getContext('webgl') ;
+    initShaders(gl,vs, fs) ;
+    gl.clearColor(0, 0, 0, 1)
+
+    const [near, far, fov, aspect] = [ 1, 20 , 45, canvas.width / canvas.height ];
+    const camera = new PerspectiveCamera(fov, aspect, near, far);
+ 
+    
+    // 投影视图矩阵
+    // const pvMatrix = new Matrix4().multiplyMatrices(
+    //     camera.projectionMatrix,
+    //     camera.matrixWorldInverse
+    // )
+    const eye = new Vector3(1, 1, 1)
+    const target = new Vector3(0, 1, -2.5)
+    const up = new Vector3(0, 1, 0)
+    camera.position.copy(eye); // 中心位置（本地坐标系原点） 也是视点
+    camera.lookAt(target);
+    // .updateProjectionMatrix () : null 更新像机投影矩阵。在任何参数被改变以后必须被调用。
+    camera.updateWorldMatrix(true);
+  
+  /* 透视投影 视图矩阵 */
+const pvMatrix = new Matrix4().multiplyMatrices(
+  camera.projectionMatrix,
+  camera.matrixWorldInverse
+)
+    const triangle1 = crtTriangle(
+        [1,0,0,1],
+        [-0.5, 0, -3],
+        new Matrix4().setPosition(1,2,-3).elements
+    );
+
+    const triangle2 = crtTriangle(
+        [1,0,1,1],
+        [0.5, 0, -3],
+        new Matrix4().setPosition(1,0.5,-3).elements
+
+    );
+    const triangle3 = crtTriangle(
+        [0,0,1,1],
+        [-0.5, 0, -2],
+        new Matrix4().setPosition(-1,-2,-5).elements
+
+    );
+    const triangle4 = crtTriangle(
+        [1,0.5,0,1],
+        [-0.5, 0, -2],
+        new Matrix4().setPosition(-1,2,-3).elements
+
+    );
+
+    render()
+    function render(){
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        triangle1.init();
+        triangle1.draw();
+        triangle2.init();
+        triangle2.draw();
+        triangle3.init();
+        triangle3.draw();
+        triangle4.init();
+        triangle4.draw();
+    }
+
+    function crtTriangle(color, [x,y,z],viewMatrix){
+        return new Poly({
+            gl,
+        source: [
+        x, 0.3 + y, z,
+          - 0.3 + x, -0.3 + y, z,
+          0.3 + x, -0.3 + y, z
+        ],
+        types: ['TRIANGLES',],
+        attributes: {
+          a_Position: {
+            size: 3,
+            index: 0
+          },
+        },
+        uniforms: {
+          u_Color: {
+            type: 'uniform4fv',
+            value: color
+          },
+          u_ProjectionMatrix: {
+            type: 'uniformMatrix4fv',
+            value: pvMatrix.elements
+          },
+          u_viewMatrix: {
+            type: 'uniformMatrix4fv',
+            value: viewMatrix
+          },
+        }
+        })
+    }
+ </script>
+</html>

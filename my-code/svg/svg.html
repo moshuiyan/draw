@@ -15,10 +15,34 @@
             animation: spin 12s linear 0s infinite ;
             transform-origin: center;
         }
+        @keyframes movepath {
+            form { offset-distance:0 ;}
+            to { offset-distance:100% ;}
+        }
+        .move{
+            animation: movepath 12s linear 0s infinite ;
+        }
+        .ball {
+            width: 10px; height: 10px; background-color: red; border-radius: 50%; 
+            offset-path: path('m50 98  a 48 48 0 1 1 0 -96 a 24 24 0 1 1 0 48 a 24 24 0 1 0 0 48 a 48 48 0 1 0 0 -96') ;
+            /* offset-path: url(#taiji); 这个语法有问题 */
+            offset-distance: 0%; 
+        }
     </style>
 </head>
 
-<body>
+
+    <path id="taiji" d="m50 98 
+    a 48 48 0 1 1 0 -96
+    a 24 24 0 1 1 0 48
+    a 24 24 0 1 0 0 48
+    a 48 48 0 1 0 0 -96
+
+
+"
+fill="none" stroke="#ff0" stroke-width="1" ></path>
+
+    <div class="ball move"></div>
     <!-- svg viewBox x y w h xy 代表坐标原点的矢量位移 也就是说 10 10 代表其坐标原点在 （-10,-10） -->
     <svg width="100" viewBox="0 0 50 100" fill="#000" xmlns='http://www.w3.org/2000/svg'>
         <!-- 这是矢量相加小写，这种写法只需要改变起点的位置就能改变整幅画的位置，有点posion的意思    大写才是坐标定位 -->
@@ -47,6 +71,46 @@
         l 0, -35" stroke="#000" stroke-width="1" fill="none" ></path>
         <rect x="13" y="22" height="3" width="27" fill="none" stroke ="#000"></rect>
     </svg>
+    <!-- 太极 path一次不能画一个整圆，那我可以分两次 -->
+<svg 
+     viewBox=" 0 0 100 100" version="1.1"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- 我先画左半圆r48  再画s -->
+     <path d="m50 2 
+              a 48 48 0 1 0 0 96
+              a 24 24 0 1 1 0 -48
+              a 24 24 0 1 0 0 -48
+              a 48 48 0 1 1 0 96
+
+    
+    "
+         fill="none" stroke="#111" stroke-width="1" />
+        <!-- 为了动画顺畅得改 先画s 再画圆  或者从开始画圆-->
+   
+         <path id="taiji" d="m50 98 
+         a 48 48 0 1 1 0 -96
+         a 24 24 0 1 1 0 48
+         a 24 24 0 1 0 0 48
+         a 48 48 0 1 0 0 -96
+
+
+"
+    fill="none" stroke="#ff0" stroke-width="1" />
+    <circle cx="50" cy="98" r="1"  fill="#f0f">
+
+        <animateMotion path="m0 0 
+        a 24 24 0 1 1 0 -48
+        a 24 24 0 1 0 0 -48
+        a 48 48 0 1 0 0 96
+        a 48 48 0 1 0 0 -96" begin="0s" dur="10s" repeatCount="indefinite"   />
+        <animate 
+            attributeName="fill"
+            from="#f0f" to="#0ff"
+            dur="10s"
+            repeatCount="indefinite"/>
+    </circle>
+</svg>
 <!-- 罗盘 -->
         <svg 
              viewBox="0 0 100 100 " version="1.1"
@@ -76,18 +140,18 @@
 
             <g class="spin" fill="none" stroke-width="1" stroke="#ccc">
                 <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(0deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(30deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(60deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(90deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(120deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(150deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(180deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(210deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(240deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(270deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(300deg)" />
-<line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(330deg)" />
-</g>
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(30deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(60deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(90deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(120deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(150deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(180deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(210deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(240deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(270deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(300deg)" />
+                <line x1="15" y1="50" x2="1" y2="50" style="transform-origin:  center;transform:rotate(330deg)" />
+            </g>
                 <text x="2" class="spin" y="50" style="font-size:10px;letter-spacing: 4px;transform:rotate(6deg);transform-origin:center">
                     <textPath xlink:href="#circle1">
                         子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥
@@ -189,7 +253,7 @@
             <text x="0"  y="380" style="font-size:18px;">y</text>
             </svg>
 </svg>
-<svg width="" height=""
+<svg 
      viewBox="-500 -500 1000 1000" version="1.1"
      xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -340,5 +404,13 @@ function jie二元一次fangcheng(A1,B1, C1, A2,B2, C2){
      }
 
 }
+Object.prototype.forEach = function(...arg){
+    return  Object.entries(this).forEach(...arg)
+}
+
+
+const  abc = {1:2,2:3,3:4}
+abc.forEach(([key,val],index )=> console.log(key,val, index))
+
 </script>
 </html>

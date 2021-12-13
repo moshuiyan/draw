@@ -74,6 +74,7 @@ const triangle4 = crtTriangle(
 )
 
 render()
+// #region
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -90,7 +91,7 @@ function render() {
     triangle4.draw()
 
 }
-
+// #endregion
 function crtTriangle(color, modelMatrix){
   console.log(modelMatrix)
         return new Poly({
@@ -126,11 +127,15 @@ function crtTriangle(color, modelMatrix){
 
     /* 鼠标事件集合  event.button  0 1 2 
     2 右键 pan  位移
+
+    滚轮每次滚动时scale的增量的系数 也就是加速度
+
     */
 
     const mouseButton = new Map([[2,'pan']]);
+    const zoomScale = 0.95 ;
 /* 状态 pan表示位移 */
-let state = 'pan' ;
+let state = 'none' ;
 /* 拖曳起始和结束位  单位px*/
 const dragStart = new Vector2();
 const dragEnd = new Vector2();
@@ -160,6 +165,16 @@ canvas.addEventListener('pointerup', (e)=> {
     state = 'none' ; // 清除状态
 })
 
+canvas.addEventListener('wheel', ({deltaY})=> {
+  if(deltaY< 0){
+    dolly(1/zoomScale)
+  }else if (deltaY > 0) {
+    dolly(zoomScale)
+  }
+  update()
+})
+
+
 
 function handleMouseMovePan({clientX, clientY, button}){
     dragEnd.set(clientX, clientY);
@@ -170,7 +185,7 @@ function handleMouseMovePan({clientX, clientY, button}){
 
 }
 
-/* 这delta 不就是△ 吗  */
+/* 这delta 不就是△ 吗 位移 */
 function pan(delta){
     // 相机近裁剪面的尺寸
     const cameraW  = camera.right - camera.left ; 
@@ -197,6 +212,11 @@ function pan(delta){
     panoffset.copy(vx.add(vy));
 
     update()
+}
+/* 缩放 这里直接缩放相机的近裁剪面， 相机裁剪面和可视区域的比值越小， 显示的图形就越大，看到范围就越小 */
+function dolly(delta){
+  camera.zoom*=delta;
+  camera.updateProjectionMatrix(); // 更新视图矩阵
 }
 function update(){
   /* 平移相机要把目标点位一起移动， 保持视线， */

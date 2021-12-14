@@ -138,7 +138,7 @@ function crtTriangle(color, modelMatrix){
     const spinAxis = new Set([ 'y'])
     const zoomScale = 0.95 ;
 /* 旋转轨道 视线从相机中心指向目标   球坐标（p, phi(φ), theta（θ）） 下面就是相机视点相对于目标的球坐标
- * 极角是从y轴正半轴开始的， 一般y轴正半轴竖直向上  方位角是从z轴正半轴开始的
+ * 极角是从y轴正半轴开始的， 一般y轴正半轴竖直向上[0, 180]  方位角是从z轴正半轴开始的
  * The polar angle (phi) is measured from the positive y-axis. The positive y-axis is up.
  * The azimuthal angle (theta) is measured from the positive z-axis.
  */
@@ -237,8 +237,11 @@ function rotate({x, y}){
 const { clientHeight} = canvas ;
 /* 限制只能绕某个轴旋转 */
 spinAxis.has('x')
+let phi ;
 spinAxis.has('x') && (spherical.theta -= pi2 * x /clientHeight) // 这意思就是鼠标在x方向上位移为一个画布的高时 也就绕Y轴转了360
-spinAxis.has('y') && (spherical.phi -= pi2 * y /clientHeight)  ;
+spinAxis.has('y') && (phi = spherical.phi -pi2 * y /clientHeight)  ;
+/* 限制phi角的范围 */
+spherical.phi = Math.max(0, Math.min(pi2/2, phi))
 update()
 console.log(pvMatrix.elements)
 }

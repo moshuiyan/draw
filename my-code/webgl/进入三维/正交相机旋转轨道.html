@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>相机轨道————旋转</title>
+    <title>相机轨道————旋转💯</title>
 </head>
 <body>
     <canvas id=3d></canvas>
@@ -135,7 +135,7 @@ function crtTriangle(color, modelMatrix){
     */
     const pi2 = Math.PI * 2 ;
     const mouseButton = new Map([[2,'pan'], [0, 'rotate']]);
-    const spinAxis = new Set([ 'y'])
+    const spinAxis = new Set([ 'x','y'])
     const zoomScale = 0.95 ;
 /* 旋转轨道 视线从相机中心指向目标   球坐标（p, phi(φ), theta（θ）） 下面就是相机视点相对于目标的球坐标
  * 极角是从y轴正半轴开始的， 一般y轴正半轴竖直向上[0, 180]  方位角是从z轴正半轴开始的
@@ -240,8 +240,8 @@ spinAxis.has('x')
 let phi ;
 spinAxis.has('x') && (spherical.theta -= pi2 * x /clientHeight) // 这意思就是鼠标在x方向上位移为一个画布的高时 也就绕Y轴转了360
 spinAxis.has('y') && (phi = spherical.phi -pi2 * y /clientHeight)  ;
-/* 限制phi角的范围 */
-spherical.phi = Math.max(0, Math.min(pi2/2, phi))
+/* 限制phi角的范围  虽然范围是[0 ,180]但实际上应是(0, 180) 极角如果为0 180那就是视线和向量（0,1,0）重合，那么方位角将失去意义*/
+spherical.phi = Math.min(pi2 / 2 *0.99999, Math.max(1/100000, phi))
 update()
 console.log(pvMatrix.elements)
 }

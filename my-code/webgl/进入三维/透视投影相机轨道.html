@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>透视相机轨道</title>
+</head>
+<body>
+    <canvas id=3d></canvas>
+    
+
+    <!-- 通过相机的运动来实现视图变换，那不就是视图矩阵 -->
+</body>
+<script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    uniform mat4 u_PvMatrix;
+    uniform mat4 u_ModelMatrix;
+    void main(){
+      gl_Position = u_PvMatrix*u_ModelMatrix*a_Position;
+    }
+</script>
+<script id="fragmentShader" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 u_Color;
+    void main(){
+      gl_FragColor=u_Color;
+    }
+</script>
+
+<script type="module">
+    import Poly from '../../util/Poly-1.js' ;
+    import { Matrix4, Vector3, Vector2, Quaternion, Object3D, OrthographicCamera , PerspectiveCamera, Spherical} from '../../../crystalocean-three.js-master/three.js/build/three.module.js';
+    import { initShaders , parseColorStops} from '../../util/initShader.js';
+    const canvas = document.getElementById('3d') ;
+    const fs  = document.getElementById('fragmentShader').textContent ;
+    const vs  = document.getElementById('vertexShader').innerText ;
+
+    const { sin , cos, tan} = Math
+    canvas.width = self.innerWidth -10;
+    canvas.height = self.innerHeight -50;
+    const [viewH, viewW] = [canvas.height, canvas.width] ;
+    const ratio = viewH/viewW
+    const gl = canvas.getContext('webgl') ;
+        // 启用深度测试   开启深度缓冲区 让前面的物体正常遮挡后面的物体
+    gl.enable(gl.DEPTH_TEST);
+    initShaders(gl,vs, fs) ;
+    gl.clearColor(0, 0, 0, 1)
+/* 透视相机  fov是上下面的夹角， aspect是远近裁剪面的宽高比 w/h 应该是小数参数计算影响了精度 */
+    const [near, far, fov, aspect] = [ 1, 20 , 45 ,viewW /viewH  ];
+    const camera = new PerspectiveCamera(fov, aspect, near, far);
+    
+    const eye = new Vector3(0,0.5,1);
+    const up = new Vector3(0,1,0);
+    const target = new Vector3(0,0, -2.5);
+    camera.position.copy(eye);
+    camera.lookAt(target) ;
+    camera.updateWorldMatrix(true) ; // 这个方法有两个参数 分别是 是否更新父级 子级
+    const pvMatrix= new Matrix4().multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse)
+    const triangle1 = crtTriangle(
+    [1, 0, 0, 1],
+    /* 我这个版本的setPosition 需传入向量 */
+    new Matrix4().setPosition(new Vector3(-0.5, 0,-3)).elements
+)
+const triangle2 = crtTriangle(
+    [1, 0, 0, 1],
+    new Matrix4().setPosition(new Vector3(0.5, 0, -3)).elements
+)
+const triangle3 = crtTriangle(
+    [1, 1, 0, 1],
+    new Matrix4().setPosition(new Vector3(-0.5, 0, -2)).elements
+)
+const triangle4 = crtTriangle(
+    [1, 1, 0, 1],
+    new Matrix4().setPosition(new Vector3(0.5, 0, -2)).elements
+)
+
+render()
+function render() {
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    triangle1.init()
+    triangle1.draw()
+
+    triangle2.init()
+    triangle2.draw()
+
+    triangle3.init()
+    triangle3.draw()
+
+    triangle4.init()
+    triangle4.draw()
+
+}
+function crtTriangle(color, modelMatrix){
+  console.log(modelMatrix)
+        return new Poly({
+            gl,
+        source: [
+          0, 0.3, 0,
+          -0.3, -0.3, 0,
+          0.3, -0.3, 0, 
+        ],
+        types: ['TRIANGLES',],
+        attributes: {
+          a_Position: {
+            size: 3,
+            index: 0
+          },
+        },
+        uniforms: {
+          u_Color: {
+            type: 'uniform4fv',
+            value: color
+          },
+          u_PvMatrix: {
+            type: 'uniformMatrix4fv',
+            value: pvMatrix.elements
+          },
+          u_ModelMatrix: { 
+            type: 'uniformMatrix4fv',
+            value: modelMatrix
+          },
+        }
+        })
+    }
+
+    /* 鼠标事件集合  event.button  0 1 2 
+    2 右键 pan  位移
+    0 左键 rotate 旋转
+
+    滚轮每次滚动时scale的增量的系数 也就是加速度
+
+    */
+    const pi2 = Math.PI * 2 ;
+    const mouseButton = new Map([[2,'pan'], [0, 'rotate']]);
+    const spinAxis = new Set([ 'x','y'])
+    const zoomScale = 0.95 ;
+/* 旋转轨道 视线从相机中心指向目标   球坐标（p, phi(φ), theta（θ）） 下面就是相机视点相对于目标的球坐标
+ * 极角是从y轴正半轴开始的， 一般y轴正半轴竖直向上[0, 180]  方位角是从z轴正半轴开始的
+ * The polar angle (phi) is measured from the positive y-axis. The positive y-axis is up.
+ * The azimuthal angle (theta) is measured from the positive z-axis.
+ */
+    const spherical = new Spherical().setFromVector3(camera.position.clone().sub(target))
+/* 状态 pan表示位移 */
+let state = 'none' ;
+/* 拖曳起始和结束位  单位px*/
+const dragStart = new Vector2();
+const dragEnd = new Vector2();
+/* 鼠标每次移动量单位webgl坐标量 */
+const panoffset = new Vector3();
+/* 确定竖直方向上的拖曳 是对应相机本地坐标系的 y轴还是z轴  true y  , false z */
+const screenSpacePanning = false ;
+// 阻止默认右键菜单事件
+canvas.oncontextmenu = (e)=> {
+e.preventDefault();
+}
+// 指针 - pointer  pointerdown 指针激活时触发，pointup指针不再活跃 pointer指针坐标改变 
+/*某个呈现形式并不确定的硬件，该硬件可以指向一个（或一组）屏幕上特定坐标。典型的指针输入设备有鼠标、触控笔、手指触控点等。  */
+canvas.addEventListener('pointerdown', ({clientX, clientY, button})=> {
+  dragStart.set(clientX, clientY)  
+  state = mouseButton.get(button ) // 修改状态
+})
+canvas.addEventListener('pointermove', ({clientX, clientY, button})=> {
+    dragEnd.set(clientX, clientY);
+
+    /* 根据不同状态 */
+    switch(state){ 
+        case 'pan':
+         /*sub() 从该向量减去参数向量。  */
+        pan(dragEnd.clone().sub(dragStart))
+        break ;
+          case 'rotate':
+          rotate(dragEnd.clone().sub(dragStart))  
+          break
+          default:
+            break ;
+    }
+    // 更新拖曳起始位
+    dragStart.copy(dragEnd);
+})
+
+canvas.addEventListener('pointerup', (e)=> {
+    state = 'none' ; // 清除状态
+})
+
+canvas.addEventListener('wheel', ({deltaY})=> {
+  if(deltaY< 0){
+    dolly(1/zoomScale)
+  }else if (deltaY > 0) {
+    dolly(zoomScale)
+  }
+  update()
+})
+
+
+/* 这delta 不就是△ 吗 位移 */
+function pan({x, y}){
+  const { position, up , matrix} = camera ;
+  const { clientWidth, clientHeight}= canvas ;
+
+  // 视线的长度
+  const sightLen  = position.clone().sub(target).length()
+   
+  // 视椎体垂直夹角的一半 ， 转弧度
+  const halfFov= fov /360 *  pi2 ;
+  // 目标平面（过视点且平行于近裁剪面的平面）的高
+  const targetHeight = sightLen * tan(halfFov) *2
+  // 目标面与画布的比率
+  const ratio  = targetHeight / clientHeight ;
+  // 画布位移量转目标平面位移量
+  const distanceLeft  =  x * ratio ;
+  const distanceUp  =  y * ratio ;
+  // 鼠标水平运动时， 相机按本地x轴水平运动
+  const mx = new Vector3().setFromMatrixColumn(matrix, 0);
+  // 鼠标垂直运动时， 相机按本地y轴或者-z轴 运动
+  const myOrmz = new Vector3() ;
+  if(screenSpacePanning){
+//  正交相机默认是y
+    myOrmz.setFromMatrixColumn(matrix, 1);
+
+  }else {
+//  透视相机默认是-z
+
+    // myOrmz.setFromMatrixColumn(matrix, 2);
+    myOrmz.crossVectors(up,mx)
+
+  }
+  // 目标面位移量转世界坐标
+  const vx = mx.clone().multiplyScalar(-distanceLeft);
+  const vy = myOrmz.clone().multiplyScalar(distanceUp);
+
+  panoffset.copy(vx.add(vy))
+
+  
+    update()
+}
+/* 缩放     正交相机直接缩放近裁剪面， 相机裁剪面和可视区域的比值越小， 显示的图形就越大，看到范围就越小 
+  透视相机的缩放可以直接调整近裁剪面到目标点的距离, 不对， 准确的说是视点到目标点的距离 视线的长度。
+*/
+function dolly(delta){
+  // camera.position.lerp(target, 1-delta);
+  spherical.radius *= delta // 球坐标缩放
+  // camera.updateProjectionMatrix(); // 更新视图矩阵
+}
+/* 按比例取两点之间的值 */
+function lerp2(v=new Vector3(),alpha = 1){
+  this.x += (v.x -this.x) *alpha ;
+  this.y += (v.y -this.y) *alpha ;
+  this.z += (v.z -this.z) *alpha ;
+  return this
+}
+/* 旋转 相机的旋转就是让相机绕某一点旋转， 轨迹集合是一个球。
+所以要定住目标 theta是方位角从z轴开始
+
+这个旋转有一些问题 ，等会来试着描述一下， 好像是因为没有开启深度，遮挡关系不正常；
+正真的问题是 我绕x旋转180度的时候， 整个坐标系似乎直接z轴取反了, 
+万向锁？ 是什么
+*/
+function rotate({x, y}){
+const { clientHeight} = canvas ;
+/* 限制只能绕某个轴旋转 */
+spinAxis.has('x')
+let phi ;
+spinAxis.has('x') && (spherical.theta -= pi2 * x /clientHeight) // 这意思就是鼠标在x方向上位移为一个画布的高时 也就绕Y轴转了360
+spinAxis.has('y') && (phi = spherical.phi -pi2 * y /clientHeight)  ;
+/* 限制phi角的范围  虽然范围是[0 ,180]但实际上应是(0, 180) 极角如果为0 180那就是视线和向量（0,1,0）重合，那么方位角将失去意义*/
+spherical.phi = Math.min(pi2 / 2 *0.99999, Math.max(1/100000, phi))
+update()
+console.log(pvMatrix.elements)
+}
+
+function update(){
+  /* 平移相机要把目标点位一起移动， 保持视线， */
+  target.add(panoffset);
+  camera.position.add(panoffset);
+/*旋转相机 这个会影响 lerp这种缩放方式 ，但是球坐标缩放需要更新这个*/
+  const rotateOffset = new Vector3().setFromSpherical(spherical) ;
+  camera.position.copy( target.clone().add(rotateOffset)) 
+
+  camera.lookAt(target);
+  camera.updateMatrixWorld(true); // 这个方法的参数是force 会递归更新被包含的坐标系
+  pvMatrix.multiplyMatrices(
+    camera.projectionMatrix,
+    camera.matrixWorldInverse
+  )
+  /* 重置旋转量和位移量 */
+  spherical.setFromVector3(
+      camera.position.clone().sub(target) 
+  )
+  panoffset.set(0,0,0)
+  render() ;
+}
+
+
+</script>
+</html>

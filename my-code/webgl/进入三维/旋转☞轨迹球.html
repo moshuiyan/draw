@@ -72,7 +72,7 @@
 
     camera.position.copy(eye);
     camera.lookAt(target);
-    camera.updateMatrixWorld();
+    camera.updateMatrixWorld(); // 之前这里没传参 导致了旋转后有些部分会蒙上黑色
     const pvMatrix = new Matrix4().multiplyMatrices(
       camera.projectionMatrix,
       camera.matrixWorldInverse
@@ -94,6 +94,7 @@
       [1, 1, 0, 1],
       new Matrix4().setPosition(new Vector3(1, 0, -2)).elements
     );
+    const circle1 = crtCircle([1,0,1,1], new Matrix4().setPosition(new Vector3(0,0,-5)),[0,0,0], [1,1,1]);
 
     render();
     // #region
@@ -111,7 +112,10 @@
 
       triangle4.init();
       triangle4.draw();
+      circle1.init();
+      circle1.draw();
     }
+    // 第一个三角形 逆时针，后面全部用fan三角扇，就能画出以起点为圆心的圆
     function crtTriangle(color, modelMatrix) {
       console.log(modelMatrix);
       return new Poly({
@@ -130,15 +134,15 @@
                     0,sin(70* du), cos(70*du),
                     0,sin(80* du), cos(80*du),
                     0,sin(90* du), cos(90*du), 
-                    sin(10* du),0, cos(10*du),
-                    sin(20* du),0, cos(20*du),
-                    sin(30* du),0, cos(30*du),
-                    sin(40* du),0, cos(40*du),
-                    sin(50* du),0, cos(50*du),
-                    sin(60* du),0, cos(60*du),
-                    sin(70* du),0, cos(70*du),
-                    sin(80* du),0, cos(80*du),
-                    sin(90* du),0, cos(90*du),
+                    sin(10* du), cos(10*du),0,
+                    sin(20* du), cos(20*du),0,
+                    sin(30* du), cos(30*du),0,
+                    sin(40* du), cos(40*du),0,
+                    sin(50* du), cos(50*du),0,
+                    sin(60* du), cos(60*du),0,
+                    sin(70* du), cos(70*du),0,
+                    sin(80* du), cos(80*du),0,
+                    sin(90* du), cos(90*du),0,
                  ],
                   /* strip是带  */
         types: ["TRIANGLE_FAN"],
@@ -161,6 +165,42 @@
           u_ModelMatrix: {
             type: "uniformMatrix4fv",
             value: modelMatrix,
+          },
+        },
+      });
+    }
+/*                                            圆心  起笔点  角度      */
+    function crtCircle( color, modelMatrix, center, start,angle){
+      const [x1,y1,z1] = center ;
+      const [x2,y2,z2] = start ;
+      let n = 37, points=[],r = Math.sqrt( (x2-x1)*(x2-x1)+ (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2)  )  ;
+      while(n--){
+        points.push(x1 ,y1+ r* sin(n*10* du),z1 + r * cos(n*10*du))
+      }
+      return new Poly({
+        gl,
+        source: points,
+                  /* strip是带 fan是扇 */
+        types: ["TRIANGLE_FAN"],
+        attributes: {
+          a_Position: {
+            size: 3,
+            index: 0,
+          },
+          
+        },
+        uniforms: {
+          u_Color: {
+            type: "uniform4fv",
+            value: color,
+          },
+          u_PvMatrix: {
+            type: "uniformMatrix4fv",
+            value: pvMatrix.elements,
+          },
+          u_ModelMatrix: {
+            type: "uniformMatrix4fv",
+            value: modelMatrix.elements,
           },
         },
       });

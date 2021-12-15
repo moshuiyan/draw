@@ -43,7 +43,8 @@
     const canvas = document.getElementById("3d");
     const fs = document.getElementById("fragmentShader").textContent;
     const vs = document.getElementById("vertexShader").innerText;
-
+    const { sin , cos}  = Math;
+    const du  = Math.PI / 180
     canvas.width = self.innerWidth - 10;
     canvas.height = self.innerHeight - 50;
     const [viewH, viewW] = [canvas.height, canvas.width];
@@ -79,19 +80,19 @@
     const triangle1 = crtTriangle(
       [1, 0, 0, 1],
       /* 我这个版本的setPosition 需传入向量 */
-      new Matrix4().setPosition(new Vector3(-0.5, 0, -3)).elements
+      new Matrix4().setPosition(new Vector3(-1, 0, -7)).elements
     );
     const triangle2 = crtTriangle(
       [1, 0, 0, 1],
-      new Matrix4().setPosition(new Vector3(0.5, 0, -3)).elements
+      new Matrix4().setPosition(new Vector3(1, 0, -7)).elements
     );
     const triangle3 = crtTriangle(
       [1, 1, 0, 1],
-      new Matrix4().setPosition(new Vector3(-0.5, 0, -2)).elements
+      new Matrix4().setPosition(new Vector3(-1, 0, -2)).elements
     );
     const triangle4 = crtTriangle(
       [1, 1, 0, 1],
-      new Matrix4().setPosition(new Vector3(0.5, 0, -2)).elements
+      new Matrix4().setPosition(new Vector3(1, 0, -2)).elements
     );
 
     render();
@@ -118,6 +119,26 @@
         source: [ 0, 0.3, 0,  0, -0.3, 0,  0.3, -0.3, 0,
                     0.3,0.3, 0 ,
                     0.3,0.3, -0.6 ,
+                    0.0,0.3, -0.6 ,
+                    0.0,0.3, -0.6 ,// 圆的半径0.6逆时针 从0 点开始画
+                    0,sin(10* du), cos(10*du),
+                    0,sin(20* du), cos(20*du),
+                    0,sin(30* du), cos(30*du),
+                    0,sin(40* du), cos(40*du),
+                    0,sin(50* du), cos(50*du),
+                    0,sin(60* du), cos(60*du),
+                    0,sin(70* du), cos(70*du),
+                    0,sin(80* du), cos(80*du),
+                    0,sin(90* du), cos(90*du), 
+                    sin(10* du),0, cos(10*du),
+                    sin(20* du),0, cos(20*du),
+                    sin(30* du),0, cos(30*du),
+                    sin(40* du),0, cos(40*du),
+                    sin(50* du),0, cos(50*du),
+                    sin(60* du),0, cos(60*du),
+                    sin(70* du),0, cos(70*du),
+                    sin(80* du),0, cos(80*du),
+                    sin(90* du),0, cos(90*du),
                  ],
                   /* strip是带  */
         types: ["TRIANGLE_FAN"],

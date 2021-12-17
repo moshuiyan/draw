@@ -9,7 +9,8 @@
 <body>
     <p>
         webgl 的一个单位就是半个canvas的宽度，
-        顶点就是某些确定的点，片元是连点的过渡
+        顶点就是某些确定的点，片元是最小可操控单元吧
+        <button id="btn"> </button>
     </p>
     <canvas ></canvas>
 </body>
@@ -29,6 +30,39 @@
     }
 </script>
 <script>
+    const btn = document.getElementById('btn')
+    btn.addEventListener("click", async function () {
+  let stream = await navigator.mediaDevices.getDisplayMedia({
+    video: true
+  });
+  let mine
+  if(MediaRecorder){
+   mine = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')? "video/webm; codecs=vp9"  : "video/webm";
+   let mineRecord = new MediaRecorder(stream, { mimetype:mine})
+  }
+  /* 存储流 */
+  let chunks = []
+    mediaRecorder.addEventListener('dataavailable', function(e) {
+        chunks.push(e.data)
+    })
+
+   mediaRecorder.addEventListener('stop', function(){
+      let blob = new Blob(chunks, {
+          type: chunks[0].type
+      })
+      let url = URL.createObjectURL(blob)
+
+    //   let video = document.querySelector("video")
+    //   video.src = url
+
+      let a = document.createElement('a')
+      a.href = url
+      a.download = 'video.webm'
+      a.click()
+  })
+
+  mineRecord.start() ;
+});
     function initShaders(gl,vsSource,fsSource){
         //创建程序对象
         const program = gl.createProgram();

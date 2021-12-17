@@ -11,7 +11,7 @@
 <body>
     <canvas id=3d></canvas>
 
-    <button id="record">录 </button>
+    <button id="btn">录 </button>
 
 
     <!-- 通过相机的运动来实现视图变换，那不就是视图矩阵 -->
@@ -35,11 +35,10 @@
 </script>
 
 <script type="module">
-document.getElementById('record').addEventListener('click', (e)=> {
-    let stream = await navigator.mediaDevices.getDisplayMedia({
-    video: true});
-    
-})
+    import {creatRecord} from '../../util/record.js'
+    const btn = document.getElementById('btn')
+    const recordhandler = new creatRecord() ;
+    btn.addEventListener("click",recordhandler );
 
     import Poly from '../../util/Poly-1.js';
     import { Matrix4, Vector3, Vector2, Quaternion, Object3D, OrthographicCamera, PerspectiveCamera, Spherical } from '../../../crystalocean-three.js-master/three.js/build/three.module.js';

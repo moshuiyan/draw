@@ -7,6 +7,250 @@
     <title>Document</title>
 </head>
 <body>
-    
+<canvas id="3d"></canvas>    
 </body>
+
+<script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    uniform mat4 u_PvMatrix;
+    uniform mat4 u_ModelMatrix;
+    void main(){
+      gl_Position = u_PvMatrix*u_ModelMatrix*a_Position;
+    }
+</script>
+<script id="fragmentShader" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 u_Color;
+    void main(){
+      gl_FragColor=u_Color;
+    }
+</script>
+<script type="module">
+
+import Poly from "../../util/Poly-1.js";
+    import {
+      Matrix4,
+      Vector3,
+      Vector2,
+      Quaternion,
+      Object3D,
+      OrthographicCamera,
+      PerspectiveCamera,
+      Spherical,
+    } from "../../../crystalocean-three.js-master/three.js/build/three.module.js";
+    import OrbitControls from "../../util/OrbitControls.js";
+   
+    import { initShaders, parseColorStops } from "../../util/initShader.js";
+    const canvas = document.getElementById("3d");
+    const fs = document.getElementById("fragmentShader").textContent;
+    const vs = document.getElementById("vertexShader").innerText;
+    const { sin , cos}  = Math;
+    const du  = Math.PI / 180
+    canvas.width = self.innerWidth - 10;
+    canvas.height = self.innerHeight - 50;
+    const [viewH, viewW] = [canvas.height, canvas.width];
+    const ratio = viewH / viewW;
+    const gl = canvas.getContext("webgl");
+    // 启用深度测试   开启深度缓冲区 让前面的物体正常遮挡后面的物体
+    gl.enable(gl.DEPTH_TEST);
+
+    initShaders(gl, vs, fs);
+    gl.clearColor(0, 0, 0, 1);
+    /* 正交相机 */
+    const [near, far, left, right, top, bottom] = [
+      1,
+      8,
+      -2 /ratio,
+      2/ ratio,
+      2 ,
+      -2 ,
+    ];
+    const camera = new OrthographicCamera(left, right, top, bottom, near, far);
+
+    const eye = new Vector3(1, 1, 2);
+    const up = new Vector3(0, 1, 0);
+    const target = new Vector3(0, 0, -3);
+
+    camera.position.copy(eye);
+    camera.lookAt(target);
+    camera.updateMatrixWorld(); // 之前这里没传参 导致了旋转后有些部分会蒙上黑色
+    const pvMatrix = new Matrix4().multiplyMatrices(
+      camera.projectionMatrix,
+      camera.matrixWorldInverse
+    );
+    const triangle1 = crtTriangle(
+      [1, 0, 0, 1],
+      /* 我这个版本的setPosition 需传入向量 */
+      new Matrix4().setPosition(new Vector3(-1, 0, -7)).elements
+    );
+    const triangle2 = crtTriangle(
+      [1, 0, 0, 1],
+      new Matrix4().setPosition(new Vector3(1, 0, -7)).elements
+    );
+    const triangle3 = crtTriangle(
+      [1, 1, 0, 1],
+      new Matrix4().setPosition(new Vector3(-1, 0, -2)).elements
+    );
+    const triangle4 = crtTriangle(
+      [1, 1, 0, 1],
+      new Matrix4().setPosition(new Vector3(1, 0, -2)).elements
+    );
+    const circle1 = crtCircle([1,0,1,1], new Matrix4().setPosition(new Vector3(0,0,-5)),[0,0,0], [1,1,1]);
+
+    render();
+    // #region
+    function render() {
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      triangle1.init();
+      triangle1.draw();
+
+      triangle2.init();
+      triangle2.draw();
+
+      triangle3.init();
+      triangle3.draw();
+
+      triangle4.init();
+      triangle4.draw();
+      circle1.init();
+      circle1.draw();
+    }
+    // 第一个三角形 逆时针，后面全部用fan三角扇，就能画出以起点为圆心的圆
+    function crtTriangle(color, modelMatrix) {
+      console.log(modelMatrix);
+      return new Poly({
+        gl,
+        source: [ 0, 0.3, 0,  0, -0.3, 0,  0.3, -0.3, 0,
+                    0.3,0.3, 0 ,
+                    0.3,0.3, -0.6 ,
+                    0.0,0.3, -0.6 ,
+                    0.0,0.3, -0.6 ,// 圆的半径0.6逆时针 从0 点开始画
+                    0,sin(10* du), cos(10*du),
+                    0,sin(20* du), cos(20*du),
+                    0,sin(30* du), cos(30*du),
+                    0,sin(40* du), cos(40*du),
+                    0,sin(50* du), cos(50*du),
+                    0,sin(60* du), cos(60*du),
+                    0,sin(70* du), cos(70*du),
+                    0,sin(80* du), cos(80*du),
+                    0,sin(90* du), cos(90*du), 
+                    sin(10* du), cos(10*du),0,
+                    sin(20* du), cos(20*du),0,
+                    sin(30* du), cos(30*du),0,
+                    sin(40* du), cos(40*du),0,
+                    sin(50* du), cos(50*du),0,
+                    sin(60* du), cos(60*du),0,
+                    sin(70* du), cos(70*du),0,
+                    sin(80* du), cos(80*du),0,
+                    sin(90* du), cos(90*du),0,
+                 ],
+                  /* strip是带  */
+        types: ["TRIANGLE_FAN"],
+        attributes: {
+          a_Position: {
+            size: 3,
+            index: 0,
+          },
+          
+        },
+        uniforms: {
+          u_Color: {
+            type: "uniform4fv",
+            value: color,
+          },
+          u_PvMatrix: {
+            type: "uniformMatrix4fv",
+            value: pvMatrix.elements,
+          },
+          u_ModelMatrix: {
+            type: "uniformMatrix4fv",
+            value: modelMatrix,
+          },
+        },
+      });
+    }
+/*                                            圆心  起笔点  角度      */
+    function crtCircle( color, modelMatrix, center, start,angle){
+      const [x1,y1,z1] = center ;
+      const [x2,y2,z2] = start ;
+      let n = 37, points=[],r = Math.sqrt( (x2-x1)*(x2-x1)+ (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2)  )  ;
+      while(n--){
+        points.push(x1 ,y1+ r* sin(n*10* du),z1 + r * cos(n*10*du))
+      }
+      return new Poly({
+        gl,
+        source: points,
+                  /* strip是带 fan是扇 */
+        types: ["TRIANGLE_FAN"],
+        attributes: {
+          a_Position: {
+            size: 3,
+            index: 0,
+          },
+          
+        },
+        uniforms: {
+          u_Color: {
+            type: "uniform4fv",
+            value: color,
+          },
+          u_PvMatrix: {
+            type: "uniformMatrix4fv",
+            value: pvMatrix.elements,
+          },
+          u_ModelMatrix: {
+            type: "uniformMatrix4fv",
+            value: modelMatrix.elements,
+          },
+        },
+      });
+    }
+
+    const controls = new OrbitControls({
+        camera,
+    dom: canvas,       // canvas元素
+    // target: new Vector3(),
+    // mouseButtons: new Map([
+    //     [0,'rotate'],
+    //     [2,'pan'],
+    // ]),
+    // state: 'none',
+    // dragStart: new Vector2(),            //存储位移起始的中间变量
+    // dragEnd: new Vector2(),              //存储位移结束的中间变量
+    // panOffset: new Vector3(),                   //存储位移的中间变量
+    // screenSpancePanning: true ,     //鼠标纵向移动 相机是否y轴方向移动
+    // zoomScale: 0.95,
+    // spherical: new Spherical(),
+    // rotateDir: 'xy',   // 允许以x y为轴的旋转
+    })
+
+    canvas.addEventListener('contextmenu', (e)=> {
+        e.preventDefault();
+        
+    })
+    canvas.addEventListener('pinterdown', controls.pointerdown)
+    canvas.addEventListener('pinterup', (e)=>{
+
+        controls.pinterup(e)
+        render()
+    } )
+        
+    console.log(pvMatrix.elements)
+    canvas.addEventListener('pointermove', (e)=> {
+        controls.pointermove(e);
+        pvMatrix.copy(controls.getPvMatrix())
+        console.log(pvMatrix.elements)
+
+        ;render()
+    })
+    canvas.addEventListener('wheel', (e)=> {
+        controls.wheel(e)
+        pvMatrix.copy(controls.getPvMatrix())
+        
+        ;render()
+
+
+    })
+</script>
 </html>
